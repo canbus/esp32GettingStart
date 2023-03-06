@@ -579,12 +579,13 @@ W15:期末考查
                     ledc_set_fade_with_step()
                     ledc_set_fade();
                     ledc_fade_start(); 开启渐变
-            4. 步骤总结：
-                1. #include "driver/ledc.h"
-                1. 用ledc_timer_config配置定时器(duty_resolution/freq_hz/timer_num/clk_cfg/speed_mode)
-                2. 用ledc_channel_config配置通道(channel/duty/gpio_num/speed_mode/timer_sel)
-                3. ledc_set_duty
-                4. ledc_update_duty
+        2. 步骤总结：
+             1. #include "driver/ledc.h"
+             2. 用ledc_timer_config配置定时器(duty_resolution/freq_hz/timer_num/clk_cfg/speed_mode)
+                注意: duty_resolution和freq_hz具有相关性,典型:频率为5kHz,占空比分辨率最大可为13位
+             3. 用ledc_channel_config配置通道(channel/duty/gpio_num/speed_mode/timer_sel)
+             4. ledc_set_duty
+             5. ledc_update_duty
     3. PWM基础测试
         ```测试代码
             void app_main(void)
@@ -653,7 +654,7 @@ W15:期末考查
        ```
     5. 练习1：完成的一个呼吸灯程序(LED 灯在5s内由亮变暗,再由暗变亮,一直重复)
     6. 作业2：在作业1的基础上：试着用二个按键控制灯渐变的速度。按键1，加快渐变速度，按键2，减慢渐变的速度
-    6. 练习3: RGB三色灯驱动：完成一个函数,rgb(u8 r,u8 g,u8 b),实现输入RGB值,可以得到对应的颜色
+    7. 练习3: RGB三色灯驱动：完成一个函数,rgb(u8 r,u8 g,u8 b),实现输入RGB值,可以得到对应的颜色
        ```c 参考代码
             ledc_timer_config_t ledc_timer;
             ledc_timer.duty_resolution = LEDC_TIMER_13_BIT;
