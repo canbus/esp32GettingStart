@@ -1,7 +1,45 @@
-## 2:中断输入(实用的按键)
- 1. 概念：具体的中断见[](esp32中断.md)
-   程序执行过程中CPU会遇到一些特殊情况，是正在执行的程序被“中断”，cpu中止原来正在执行的程序，转到处理异常情况或特殊事件的程序去执行，结束后再返回到原被中止的程序处(断点)继续执行
-## 任务
+## [任务](https://www.freertos.org/zh-cn-cmn-s/a00019.html)
+ 0. 任务API汇总
+    + 任务创建 
+      - xTaskCreate
+      - xTaskCreateStatic
+      - xTaskCreateRestrictedStatic
+      - vTaskDelete
+    + 任务控制
+      - vTaskDelay
+      - vTaskDelayUntil
+      - xTaskDelayUntil
+      - uxTaskPriorityGet
+      - vTaskPrioritySet
+      - vTaskSuspend
+      - vTaskResume
+      - xTaskResumeFromISR
+      - xTaskAbortDelay
+    + 任务实用程序    
+      - uxTaskGetSystemState
+      - vTaskGetInfo
+      - xTaskGetCurrentTaskHandle
+      - xTaskGetIdleTaskHandle
+      - uxTaskGetStackHighWaterMark
+      - eTaskGetState
+      - pcTaskGetName
+      - xTaskGetHandle
+      - xTaskGetTickCount
+      - xTaskGetTickCountFromISR
+      - xTaskGetSchedulerState
+      - uxTaskGetNumberOfTasks
+      - vTaskList
+      - vTaskStartTrace
+      - ulTaskEndTrace
+      - vTaskGetRunTimeStats
+      - vTaskGetIdleRunTimeCounter
+      - vTaskSetApplicationTaskTag
+      - xTaskGetApplicationTaskTag
+      - xTaskCallApplicationTaskHook
+      - pvTaskGetThreadLocalStoragePointer
+      - vTaskSetThreadLocalStoragePointer
+      - vTaskSetTimeOutState
+      - xTaskCheckForTimeOut 
  1. 基本概念
     * 对于整个单片机程序，我们称之为application，应用程序。
         使用FreeRTOS时，我们可以在application中创建多个任务(task)，有些文档把任务也称为线程(thread)
@@ -70,7 +108,9 @@
                     /* 程序不会执行到这里, 如果执行到这里就出错了 */
                 }
                 ```
-    2. 创建任务
+    2. 任务特点
+       * 每个任务在自己的上下文中执行，不依赖于系统内的其他任务或 RTOS 调度器本身。在任何时间点，应用程序中只能执行一个任务，实时 RTOS 调度器负责决定所要执行的任务。因此， RTOS 调度器可以在应用程序执行时重复启停每个任务（将任务调入或调出）。由于任务不了解 RTOS 调度器活动，因此实时 RTOS 调度器负责确保任务调入时的处理器上下文（寄存器值、堆栈内容等）与任务调出时的处理器上下文完全相同。为实现这一点，每个任务都分配有自己的堆栈。当任务调出时，执行上下文被保存到该任务的堆栈中，以便以后再调入相同的任务时可以准确地恢复其执行上下文
+    3. 创建任务
        * 创建任务时使用的函数如下：
        * xTaskCreated原型
          ```c 
@@ -90,7 +130,7 @@
         （5）uxPriority: 是一个无符号的整形数，表示优先级的大小，数值越大优先级越大
         （6）pxCreatedTask ：这里面有一个TCB结构体指针,传出去的参数,可以设为NULL
         ```
-    3. 示例1: 创建任务
+    4. 示例1: 创建任务
        1. 使用2个函数分别创建2个任务
        2. ```c
             void vTask1( void *pvParameters )
@@ -138,7 +178,7 @@
        4. 任务运行图：<br><img src="img/task1.png" width=50%>
          * 在t1：Task2进入运行态，一直运行直到t2
          * 在t2：Task1进入运行态，一直运行直到t3；在t3，Task2重新进入运行态  
-    4. 示例2: 使用任务参数
+    5. 示例2: 使用任务参数
        1. 前面提过,多个任务可以使用同一个函数，怎么体现它们的差别？
          * 栈不同
          * 创建任务时可以传入不同的参数
@@ -164,14 +204,14 @@
                 return 0;
             }
             ```
-    5. 任务的删除
+    6. 任务的删除
        * 删除任务时使用的函数如下：
          * void vTaskDelete( TaskHandle_t xTaskToDelete );
        * 删除任务
          * 自杀：vTaskDelete(NULL)
          * 被杀：别的任务执行vTaskDelete(pvTaskCode)，pvTaskCode是自己的句柄
          * 杀人：执行vTaskDelete(pvTaskCode)，pvTaskCode是别的任务的句柄
-    6. 示例3: 删除任务
+    7. 示例3: 删除任务
        * 创建任务1：任务1的大循环里，创建任务2，然后休眠一段时间
        * 任务2：打印一句话，然后就删除自己 
        * 任务1的代码
@@ -371,7 +411,7 @@
        * 有两个Delay函数：
          * vTaskDelay：至少等待指定个数的Tick Interrupt才能变为就绪状态
          * vTaskDelayUntil：等待到指定的绝对时刻，才能变为就绪态
-    1. 示例6: Delay
+    2. 示例6: Delay
  6. 空闲任务及其钩子函数
     1. 介绍
        * 在FreeRTOS_03_delete_task的实验里，我们体验过空闲任务(Idle任务)的作用：释放被删除的任务的内存。

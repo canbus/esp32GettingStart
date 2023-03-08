@@ -616,45 +616,10 @@ W15:期末考查
             }
         ```
        * 效果
-        上面的例子是一个通道输出，一个LED灯，初始化的时候占空比为0，通过ledc_set_duty函数把占空比设4000.
-    4. PWM渐变测试
-       * 上面的例子是简单的PWM控制,如果需要实现渐变的效果,则需要使用以下几个函数
-       ```c
-            ledc_fade_func_install(0);    // 启用ledc fade功能
-            ledc_set_fade_with_time(speed_mode, channel, target_duty, max_fade_time_ms);
-            ledc_fade_start(speed_mode, channel, ledc_fade_mode_t fade_mode);
-       ``` 
-       ```c 下面实例GPIO3的pwm由0渐变到4000,用时3秒
-            ledc_timer_config_t ledc_timer;
-            ledc_timer.duty_resolution = LEDC_TIMER_13_BIT;
-            ledc_timer.freq_hz = 5000; // PWM信号频率,5kHz,占空比分辨率最大为13位
-            ledc_timer.speed_mode = LEDC_LOW_SPEED_MODE;    // 定时器模式
-            ledc_timer.timer_num = LEDC_HS_TIMER;            // 定时器序号
-            ledc_timer.clk_cfg = LEDC_AUTO_CLK;
-            ledc_timer_config(&ledc_timer);
-
-            ledc_channel_config_t ledc_channel[1] = {
-                {
-                    .channel    = 1,
-                    .duty       = 0,
-                    .gpio_num   = 3,
-                    .speed_mode = LEDC_LOW_SPEED_MODE,
-                    .hpoint     = 0,
-                    .timer_sel  = LEDC_TIMER_0
-                },
-            };
-            ledc_channel_config(&ledc_channel[0]);
-            // ledc_set_duty(LEDC_LOW_SPEED_MODE,1,4000);
-            // ledc_update_duty(LEDC_LOW_SPEED_MODE,1);
-
-            //渐变控制器
-            ledc_fade_func_install(0);    // 注册LEDC服务，在调用前使用，参数是作为是否允许中断
-            ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, 1, 4000, 3000); //3000,3秒
-            ledc_fade_start(LEDC_LOW_SPEED_MODE, 1, LEDC_FADE_NO_WAIT);
-       ```
-    5. 练习1：完成的一个呼吸灯程序(LED 灯在5s内由亮变暗,再由暗变亮,一直重复)
-    6. 作业2：在作业1的基础上：试着用二个按键控制灯渐变的速度。按键1，加快渐变速度，按键2，减慢渐变的速度
-    7. 练习3: RGB三色灯驱动：完成一个函数,rgb(u8 r,u8 g,u8 b),实现输入RGB值,可以得到对应的颜色
+        上面的例子是一个通道输出，一个LED灯，初始化的时候占空比为0，通过ledc_set_duty函数把占空比设4000.    
+    4. 练习1：完成的一个呼吸灯程序(LED 灯在5s内由亮变暗,再由暗变亮,一直重复)
+    5. 练习2：在作业1的基础上：试着用二个按键控制灯渐变的速度。按键1，加快渐变速度，按键2，减慢渐变的速度
+    6. 练习3: RGB三色灯驱动：完成一个函数,rgb(u8 r,u8 g,u8 b),实现输入RGB值,可以得到对应的颜色
        ```c 参考代码
             ledc_timer_config_t ledc_timer;
             ledc_timer.duty_resolution = LEDC_TIMER_13_BIT;
@@ -709,6 +674,137 @@ W15:期末考查
 
             while(1) vTaskDelay(1000 / portTICK_PERIOD_MS);
        ```
+    7. PWM硬件渐变
+       * 上面的例子是简单的PWM控制,如果需要实现渐变的效果,则需要使用以下几个函数
+       ```c
+            ledc_fade_func_install(0);    // 注册LEDC服务，在调用前使用，参数是作为是否允许中断
+            ledc_set_fade_with_time(speed_mode, channel, target_duty, max_fade_time_ms);
+            ledc_fade_start(speed_mode, channel, ledc_fade_mode_t fade_mode);
+       ``` 
+    8. PWM硬件渐变示例
+    9. ```c 下面实例GPIO3的pwm由0渐变到4000,用时3秒
+            ledc_timer_config_t ledc_timer;
+            ledc_timer.duty_resolution = LEDC_TIMER_13_BIT;
+            ledc_timer.freq_hz = 5000; // PWM信号频率,5kHz,占空比分辨率最大为13位
+            ledc_timer.speed_mode = LEDC_LOW_SPEED_MODE;    // 定时器模式
+            ledc_timer.timer_num = LEDC_HS_TIMER;            // 定时器序号
+            ledc_timer.clk_cfg = LEDC_AUTO_CLK;
+            ledc_timer_config(&ledc_timer);
+
+            ledc_channel_config_t ledc_channel[1] = {
+                {
+                    .channel    = 1,
+                    .duty       = 0,
+                    .gpio_num   = 3,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .hpoint     = 0,
+                    .timer_sel  = LEDC_TIMER_0
+                },
+            };
+            ledc_channel_config(&ledc_channel[0]);
+            // ledc_set_duty(LEDC_LOW_SPEED_MODE,1,4000);
+            // ledc_update_duty(LEDC_LOW_SPEED_MODE,1);
+
+            //渐变控制器
+            ledc_fade_func_install(0);    // 注册LEDC服务，在调用前使用，参数是作为是否允许中断
+            ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, 1, 4000, 3000); //3000,3秒
+            ledc_fade_start(LEDC_LOW_SPEED_MODE, 1, LEDC_FADE_NO_WAIT);
+       ``` 
+    10. 练习4(PWM硬件渐变):在RGB三色灯驱动练习的基础上,添加硬件渐变.函数修改成rgb(u8 r,u8 g,u8 b,u8 speed),speed为渐变秒数.
+    11. 使用中断:
+        - 要处理中断,可调用函数 ledc_isr_register()
+        - ledc_channel_config_t中的参数 ledc_intr_type_t,可以不用设置
+        - 中断的产生条件:变化量超过1023就会产生一次中断或者渐变完成时也会产生中断.
+          /*Because the max duty change times for once fade operation is 1023, if the duty change times is more than 1023, we will separate the fade operation as several times, so maybe several times interrupt will be generated. If current duty is equal to target duty, that means it is the fade end interrupt for whole fade operation.In ESP-IDF, please see the LEDC interrupt handle function ledc_fade_isr*/
+        - 使用步骤:
+          - ledc_fade_func_install(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_SHARED);
+          - ledc_isr_register(ledc_isr, (void *)100, ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_SHARED, NULL);
+          - 实现中断函数
+            - ```c
+                void IRAM_ATTR ledc_isr(void *arg)
+                {
+                    int param = (int)arg;
+                    xQueueSendFromISR(ledcQueue, &param, 0);
+                }
+              ```
+        - 完整示例
+        - ```c
+            #include "driver/ledc.h"
+            QueueHandle_t ledcQueue;
+            void IRAM_ATTR ledc_isr(void *arg)
+            {
+                static int isr_count;
+                isr_count++;
+                int param = (int)arg;
+                xQueueSendFromISR(ledcQueue, &isr_count, 0);
+            }
+
+            void app_main(void)
+            {
+                ledc_timer_config_t ledc_timer;
+                ledc_timer.duty_resolution = LEDC_TIMER_13_BIT;
+                ledc_timer.freq_hz = 5000;  // PWM信号频率,5kHz,占空比分辨率最大为13位
+                ledc_timer.speed_mode = LEDC_LOW_SPEED_MODE;  // 定时器模式
+                ledc_timer.timer_num = 0;                     // 定时器序号
+                ledc_timer.clk_cfg = LEDC_AUTO_CLK;
+                ledc_timer_config(&ledc_timer);
+
+                ledc_channel_config_t ledc_channel[3] = {
+                    {.channel = 1,
+                    .duty = 0,
+                    .gpio_num = 16,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .hpoint = 0,
+                    .timer_sel = LEDC_TIMER_0,
+                    },
+                    {.channel = 2,
+                    .duty = 500,
+                    .gpio_num = 17,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .hpoint = 0,
+                    .timer_sel = LEDC_TIMER_0,
+                    },
+                    {.channel = 3,
+                    .duty = 1000,
+                    .gpio_num = 5,
+                    .speed_mode = LEDC_LOW_SPEED_MODE,
+                    .hpoint = 0,
+                    .timer_sel = LEDC_TIMER_0,
+                    .intr_type = LEDC_INTR_DISABLE},
+                    };
+                for (int i = 0; i < 3; i++) ledc_channel_config(&ledc_channel[i]);
+
+                // ledc_set_duty(LEDC_LOW_SPEED_MODE,1,4000);
+                // ledc_update_duty(LEDC_LOW_SPEED_MODE,1);
+
+                ledcQueue = xQueueCreate(10, sizeof(int));
+
+                // 渐变控制器
+                ledc_fade_func_install(ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_SHARED);
+                // ledc_fade_func_install(0);  // 注册LEDC服务，在调用前使用，参数是作为是否允许中断
+
+                ledc_isr_register(ledc_isr, (void *)100, ESP_INTR_FLAG_IRAM | ESP_INTR_FLAG_SHARED, NULL);
+                /*Because the max duty change times for once fade operation is 1023, if the duty change times is more than 1023, we will separate the fade operation as several times, so maybe several times interrupt will be generated. If current duty is equal to target duty, that means it is the fade end interrupt for whole fade operation.
+            In ESP-IDF, please see the LEDC interrupt handle function ledc_fade_isr*/
+
+
+                ESP_LOGI("ledc", "fade_start");
+                ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, 1, 4000, 3000);  // 4000,3秒
+                ledc_fade_start(LEDC_LOW_SPEED_MODE, 1, LEDC_FADE_NO_WAIT);
+
+                while (1) {
+                    int val;
+                    xQueueReceive(ledcQueue, &val, portMAX_DELAY);
+                    ESP_LOGI("ledc", "%d", val);
+                    if (val == 4) {
+                        ledc_set_fade_with_time(LEDC_LOW_SPEED_MODE, 2, 4000, 5000);  // 
+                        ledc_fade_start(LEDC_LOW_SPEED_MODE, 2, LEDC_FADE_NO_WAIT);
+                        ESP_LOGI("ledc", "ledc_fade_start 2");
+                    }
+                }
+            }
+          ```
+    12. 练习5:呼吸流水灯的实现,用ledc驱动8个led灯,开始是全灭,第1个灯3秒内渐变到最亮,完成后,第2个灯4秒内渐变到最亮...
  5. [ADC:](adc.md)
  6. [DAC:](dac.md)
 
@@ -860,7 +956,7 @@ W15:期末考查
               ```
    
  8. SPI通信(点亮LCD屏幕)
- 9. I2C通信（AT24Cxx)
+ 9.  I2C通信（AT24Cxx)
  10. RMT
     1.  什么是RMT(https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/api-reference/peripherals/rmt.html)
     2.  示例1:
@@ -1270,28 +1366,40 @@ W15:期末考查
     #define configTICK_RATE_HZ ( ( TickType_t ) 1000 )
     如上所示的宏定义配置表示系统时钟节拍是 1KHz，即 1ms。 
    3. 时间延迟
-    FreeRTOS 中的时间延迟函数主要有以下两个作用：
-    * 为周期性执行的任务提供延迟。
-    * 对于抢占式调度器，让高优先级任务可以通过时间延迟函数释放 CPU 使用权，从而让低优先级任务可以得到执行。
+      + FreeRTOS 中的时间延迟函数主要有以下两个作用：
+        - 为周期性执行的任务提供延迟。
+        - 对于抢占式调度器，让高优先级任务可以通过时间延迟函数释放 CPU 使用权，从而让低优先级任务可以得到执行。
    4. FreeRTOS 的时间相关函数
-    FreeRTOS 时间相关的函数主要有以下 4 个：
-    * vTaskDelay () 相对延时
-        ```c
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        ```
-    * vTaskDelayUntil () 绝对延时,宏INCLUDE_vTaskDelayUntil 必须设置成1，此函数才有效
-        ```c
-        TickType_t xLastWakeTime;
-        const TickType_t xDelay1S = pdMS_TO_TICKS(1000);
-        xLastWakeTime = xTaskGetTickCount();
-        while (1) {
-            vTaskDelayUntil(&xLastWakeTime,xDelay1S);
-            printf("%d\n",xLastWakeTime);
-        }
-        ```
-    * xTaskGetTickCount()   用于获取系统当前运行的时钟节拍数
-    * xTaskGetTickCountFromISR()  在ISR中用于获取系统当前运行的时钟节拍数
-2. 定时器Timer
+      + FreeRTOS 时间相关的函数主要有以下 4 个：
+        - vTaskDelay () 相对延时
+            ```c
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
+            ```
+        - vTaskDelayUntil () 绝对延时,宏INCLUDE_vTaskDelayUntil 必须设置成1，此函数才有效
+            ```c
+            TickType_t xLastWakeTime;
+            const TickType_t xDelay1S = pdMS_TO_TICKS(1000);
+            xLastWakeTime = xTaskGetTickCount();
+            while (1) {
+                vTaskDelayUntil(&xLastWakeTime,xDelay1S);
+                printf("%d\n",xLastWakeTime);
+            }
+            ```
+        - xTaskGetTickCount()   用于获取系统当前运行的时钟节拍数
+        - xTaskGetTickCountFromISR()  在ISR中用于获取系统当前运行的时钟节拍数
+   5. 常用的时间常量及函数
+      + portMAX_DELAY
+      + portTICK_PERIOD_MS
+      + pdMS_TO_TICKS()
+      + pdTICKS_TO_MS()
+2. [任务](task.md)
+3. [同步概念](concept.md)
+4. [任务通知](tasknotify.md)
+5. [队列](queue.md)
+6. [信号量](semaphore.md)
+7. [互斥量](mutex.md)
+8. [事件组](eventGroup.md)
+9. 定时器Timer
    1. 软件定时器的基本概念
         定时器：是指从指定的时刻开始，经过一个指定时间，然后触发一个超时事件，用户可以自定义定时器的周期与频率。类似生活中的闹钟，我们可以设置闹钟每天什么时候响，还能设置响的次数，是响一次还是每天都响。
 
@@ -1347,9 +1455,9 @@ W15:期末考查
                     // }
                     }
             ```
-3. 堆栈和内存管理 Heap Memory Allocation内存监视
+10. 堆栈和内存管理 Heap Memory Allocation内存监视
    1. xPortGetFreeHeapSize()
-4. cJson
+11. cJson
    1. JSON简介 
       1. JSON (JavaScript Object Notation, JS 对象简谱) 是一种轻量级的数据交换格式。它基于 ECMAScript (欧洲计算机协会制定的js规范)的一个子集，采用完全独立于编程语言的文本格式来存储和表示数据。
       2. JSON 语法规则
@@ -1535,7 +1643,7 @@ W15:期末考查
          ```c
             cJSON_Delete(pJsonRoot);                                      // 释放cJSON_Parse()分配出来的内存空间
          ```
-5. 任务创建和销毁的内存开销/任务运行之间的动静态内存分配
+12. 任务创建和销毁的内存开销/任务运行之间的动静态内存分配
    1. 任务的创建,官方文档:https://www.freertos.org/a00125.html
    2. API:
       1. BaseType_t xTaskCreate(    TaskFunction_t pvTaskCode,

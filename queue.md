@@ -1,4 +1,29 @@
-## freeRtos
+## [队列](https://www.freertos.org/zh-cn-cmn-s/a00018.html)
+   1. 队列API
+      - xQueueCreate
+      - xQueueCreateStatic
+      - vQueueDelete
+      - xQueueSend
+      - xQueueSendFromISR
+      - xQueueSendToBack
+      - xQueueSendToBackFromISR
+      - xQueueSendToFront
+      - xQueueSendToFrontFromISR
+      - xQueueReceive
+      - xQueueReceiveFromISR
+      - uxQueueMessagesWaiting
+      - uxQueueMessagesWaitingFromISR
+      - uxQueueSpacesAvailable
+      - xQueueReset
+      - xQueuePeek
+      - xQueuePeekFromISR
+      - vQueueAddToRegistry
+      - pcQueueGetName
+      - vQueueUnregisterQueue
+      - xQueueIsQueueEmptyFromISR
+      - xQueueIsQueueFullFromISR
+      - xQueueOverwrite
+      - xQueueOverwriteFromISR
    1. queue:
       1. 队列
          1. 队列是任务间通信的主要形式。常被用于任务与任务、中断与任务之间的消息传递，通常是FIFO的形式
@@ -59,7 +84,7 @@
                                       const void *pvItemToQueue,
                                       BaseType_t *pxHigherPriorityTaskWoken //一般设置为 NULL
                                   );
-              3. 往队列头部写入数据
+              1. 往队列头部写入数据
                  * BaseType_t xQueueSendToFront(
                                 QueueHandle_t    xQueue,
                                 const void       *pvItemToQueue,
@@ -213,7 +238,7 @@
                  ```
                 * 程序运行结果如下 <br><img src="img/queue_demo.png" width=10%>
                 * 任务调度情况如下 <br><img src="img/queue_task_sw.png" width=50%>
-           10. 分辨数据源
+           1.  分辨数据源
                * 当有多个发送任务，通过同一个队列发出数据，接收任务如何分辨数据来源？
                * 数据本身需要带有"来源"信息，比如写入队列的数据是一个结构体，结构体中的sensorId用来表示数据来源
                 ```c
@@ -226,7 +251,7 @@
                 比如有二个传感器:速度传感器和角度传感器
                 * 速度传感器任务发送的数据：sensorId = motorSpeedSensor
                 * 角度传感器任务发送的数据：sensorId = angleSensor 
-           11. 传输大块数据
+           2.  传输大块数据
                * FreeRTOS的队列使用拷贝传输，也就是要传输uint32_t时，把4字节的数据拷贝进队列；要传输一个8字节的结构体时，把8字节的数据拷贝进队列。
                * 如果要传输1000字节的结构体呢？写队列时拷贝1000字节，读队列时再拷贝1000字节？不建议这么做，影响效率！
                * 这时候，我们要传输的是这个巨大结构体的地址：把它的地址写入队列，对方从队列得到这个地址，使用地址去访问那1000字节的数据。
