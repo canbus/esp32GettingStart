@@ -143,7 +143,34 @@
     * 按键消抖通常的按键所用开关为机械弹性开关，当机械触点断开、闭合时，由于机械触点的弹性作用，一个按键开关在闭合时不会马上稳定地接通，在断开时也不会一下子断开。因而在闭合及断开的瞬间均伴随有一连串的抖动，为了不产生这种现象而作的措施就是按键消抖.(出自<百度百科>) 
         <br><img src="img/key.png"> 
  2. GPIO输入练习2(完善扫描按键)
-    按一下按键，LED灯亮，再按一下，LED灯灭   
+    按一下按键，LED灯亮，再按一下，LED灯灭
+ 3. 按键示例
+    ```c
+        void initKey(){
+            gpio_config_t cfg={0};
+            cfg.pin_bit_mask = (1ull << BTN1 | 1ull << BTN2);
+            cfg.mode = GPIO_MODE_INPUT;
+            cfg.pull_up_en = GPIO_PULLUP_ENABLE;
+            cfg.pull_down_en = GPIO_PULLDOWN_DISABLE;
+            cfg.intr_type = GPIO_INTR_DISABLE;
+            gpio_config(&cfg);
+        }
+        uint32_t getKey(gpio_num_t btn)
+        {
+            if(gpio_get_level((gpio_num_t)btn) == 0){
+                vTaskDelay(pdMS_TO_TICKS(20));
+                if(gpio_get_level((gpio_num_t)btn) == 0){
+                    while(1){
+                        if(gpio_get_level((gpio_num_t)btn))
+                            break;    
+                    }
+                    INFO("key down");
+                    return btn;
+                }
+            }  
+            return 0;
+        }
+    ```   
 ## 3:中断输入(实用的按键)
  1. 概念：具体的中断见[](esp32中断.md)
    程序执行过程中CPU会遇到一些特殊情况，是正在执行的程序被“中断”，cpu中止原来正在执行的程序，转到处理异常情况或特殊事件的程序去执行，结束后再返回到原被中止的程序处(断点)继续执行
