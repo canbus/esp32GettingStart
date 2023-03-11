@@ -169,73 +169,6 @@
 13	2023-05-13	13	6	1-2-3-4	WS2812全彩色RGB LED灯带 WS2812特点与优势 WS2812介绍 WS2812软件驱动	1	课堂检查
 14	2023-05-20	14	6	1-2-3-4	系统(FreeRTOS) 系统Tick 定时器Timer 任务的创建	2
 15	2023-05-27	15	6	1-2-3-4	期末考查
-# 课程计划
-W1. 简单介绍及硬件准备
-   Windows开发环境准备
-   VS Code 快速入门
-   Flash Download Tools的使用
-   作业：1.安装vscode,2.学会使用Flash Download Tools
-    1.搭建开发环境并测试
-    2.编写hello world并观察结果
-W2. ESP-IDF构建系统
-    固件大小优化
-W3. ESP32应用程序的启动流程
-    Hello World
-W4-W5: GPIO 输出/输入
-    ESP32C3的GPIO引脚
-    常用GPIO-API
-        1. 方式一:整体法/练习
-        2. 方式二:单个法/练习
-    GPIO练习1:GPIO3间隔1秒闪烁一次
-    GPIO练习2:GPIO输入(key按键)
-W6-7: GPIO的使用：按键的长按和短按
-    方式一:中断方式
-    方式二:定时扫描
-    练习:
-        按键短按，LED为1秒间隔闪烁
-        按键长按，LED为5秒间隔闪烁
-W8-9:PWM调光：基于LEDC(LED Control)实现PWM调光
-     LED PWM控制器基础介绍
-     LED PWM控制器使用步骤
-     PWM基础测试
-     PWM渐变测试
-     PWM练习：
-        练习1：完成的一个呼吸灯程序(LED 灯在5s内由亮变暗,再由暗变亮,一直重复)
-        练习2: 完成一个函数,rgb(u8 r,u8 g,u8 b),实现输入RGB值,可以得到对应的颜色
-W10:ADC
-    概述
-    ADC 精度和通道
-    ADC 工作模式
-    ADC 衰减配置
-    ADC编程步骤
-    练习:实现从GPIO35上读取电压值.如下:
-        ```
-            rawVal:0 realVal:0.00V
-            rawVal:0 realVal:0.00V
-            rawVal:571 realVal:0.36V
-            rawVal:902 realVal:0.57V
-            rawVal:656 realVal:0.42V
-            rawVal:4095 realVal:2.60V
-            rawVal:4095 realVal:2.60V
-        ```
-W11-W12:UART通信
-    UART概览
-    简介
-    UART使用步骤
-    发数据练习：向串品发送hello,I am xx(xx为学号)
-    收数据
-        方式一:轮询
-        方式二:队列信号
-    串口练习：编写一个简易聊天程序,用串口向esp32发送数据:"hello,esp32",esp32自动回:”hello,xx"
-W13:WS2812全彩色RGB LED灯带
-    WS2812特点与优势
-    WS2812介绍
-    WS2812软件驱动
-W14:系统(FreeRTOS)
-    系统Tick
-    定时器Timer
-    任务的创建   
-W15:期末考查
 
 # ESP32入门教程
 ## 一.环境篇
@@ -423,7 +356,6 @@ W15:期末考查
         关闭Bootloader日志：idf.py menuconfig ->Bootloader config->Bootloader log verbosity
         关闭Logging日志：idf.py menuconfig->Component config->Log output->Default log verbosity
  8. [日志](esp_log.md)
-
 ## 二.基础篇
  0. 应用程序的启动流程
     * 本文将会介绍 ESP32-C3 从上电到运行 app_main 函数中间所经历的步骤（即启动流程）。

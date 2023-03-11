@@ -62,7 +62,8 @@
             ```
         4. 发数据
             使用uart write bytes()往Tx FIFO buffer里面写数据，就可以发送数据
-        5. 收数据
+        5. 发数据练习：向串品发送hello,I am xx(xx为学号)
+        6. 收数据
            1. 方式一:轮询(uart_read_bytes())
               * 使用uart_read_bytes()从Rx FIFO buffer里读数据，就是接收数据
               * ```c
@@ -145,4 +146,4 @@
                         }
                     }
               ```
- 
+        7. 串口练习：编写一个简易聊天程序,用串口向esp32发送数据:"hello,esp32",esp32自动回:”hello,xx"
