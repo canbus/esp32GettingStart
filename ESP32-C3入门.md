@@ -508,9 +508,7 @@ W15:期末考查
  9. SPI通信
  10. [RMT](rmt.md)
  11. [ws2812](ws2812.md)
- 12. RTC实时时钟/系统时钟 time/settimeofday/gettimeofday
- 13. SNTP
- 14. NVS 读写
+ 12. NVS 读写
      1. 简介
         1. 非易失性存储 (NVS) 库主要用于在 flash 中存储键值格式的数据。
             NVS适合存储一些小数据，如果对象占用空间比较大，使用负载均衡的FAT文件系统。
@@ -520,8 +518,9 @@ W15:期末考查
            2. 字符型： 以 \0 结尾的字符串；
            3. 二进制数据： 可变长度的二进制数据 (BLOB)
      2. API说明:NVS 接口位于 nvs_flash/include/nvs_flash.h
-        1. nvs_flash_init
-        2. nvs_flash_erase
+        1. nvs_flash_init,如果失败可调用“nvs_flash_erase()”擦除NVS，然后再次初始化
+        2. nvs_open("List", NVS_READWRITE, &my_handle);
+           - 第一个形参为一个字符串，可称为表名。第二个是读写模式，可选读写或者只读，第三个是当前打开的表的句柄
         3. nvs_open
         4. 读取函数
            ```c
@@ -712,7 +711,6 @@ W15:期末考查
             nvs_close(handle);
         }
         ```
- 15. NVS partition分区
 
 ## 三.系统(FreeRTOS)
 1. 系统Tick
@@ -775,11 +773,11 @@ W15:期末考查
     3. [WIFI_scan](WIFI_scan.c)
 2. Station模式连接到AP
    1. 关键步骤
-      1. xEventGroupCreate()用于创建一个事件标志组，返回值是事件标志组句柄，属于frerertos里面的东西；
+      1. xEventGroupCreate()用于创建一个事件标志组，返回值是事件标志组句柄，属于freertos里面的东西；
       2. esp_netif_init()用于初始化tcpip协议栈；
       3. esp_event_loop_create_default()创建一个默认系统事件调度循环，之后可以注册回调函数来处理系统的一些事件；
       4. esp_netif_create_default_wifi_sta()创建wifi sta；
-      5. esp_wifi_init(&cfg)初始化wifi；
+      5. esp_wifi_init(&cfg)初始化wifi,需要用WIFI_INIT_CONFIG_DEFAULT填充cfg结构体
       6. esp_event_handler_instance_register 用于向上面的esp_event_loop_create_default()`注册回调函数，在回调函数里面可以处理各种系统事件，比如wfi连接，断开等；
       7. esp_wifi_set_mode用于设置wifi的模式，在这里使用sta模式；
       8. esp_wifi_set_config设置wifi参数；
