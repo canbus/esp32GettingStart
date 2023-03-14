@@ -449,13 +449,15 @@ W15:期末考查
         做完一些初始化任务后（需要启动调度器），主任务在固件中运行应用程序提供的函数 app_main。
         运行 app_main 的主任务有一个固定的 RTOS 优先级（比最小值高）和一个 可配置的堆栈大小。
         与普通的 FreeRTOS 任务（或嵌入式 C 的 main 函数）不同，app_main 任务可以返回。如果``app_main`` 函数返回，那么主任务将会被删除。系统将继续运行其他的 RTOS 任务。因此可以将 app_main 实现为一个创建其他应用任务然后返回的函数，或主应用任务本身
- 1. Hello World
+ 1. 常用函数
+    1. 延时:ets_delay_us(); 
+ 2. Hello World
     1. 配置芯片型号: idf.py set-target esp32
     2. 配置:        idf.py menuconfig
     3. 编译:        idf.py build
     4. 烧写:        idf.py -p PORT [-b BAUD] flash
     5. 查看串口信息: idf.py -p PORT monitor 
- 2. GPIO 输出/输入
+ 3. GPIO 输出/输入
     * GPIO基础
         1. ESP32 芯片具有 34 个物理 GPIO 管脚（GPIO0 ~ GPIO19、GPIO21 ~ GPIO23、GPIO25 ~ GPIO27 和 GPIO32 ~ GPIO39）
         2. Strapping 管脚：GPIO0、GPIO2、GPIO5、GPIO12 (MTDI) 和 GPIO15 (MTDO) 是 Strapping 管脚，不建议用作其他功能
@@ -465,10 +467,10 @@ W15:期末考查
         6. GPIO34-39 只能设置为输入模式，不具备软件使能的上拉或下拉功能。
         7. TXD & RXD 通常用于烧录和调试
     * GPIO函数
-        5. GPIO的函数:
+        8. GPIO的函数:
             https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32c3/api-reference/peripherals/gpio.html
-        6. 头文件：#include "driver/gpio.h"
-        7. 配置IO：
+        9. 头文件：#include "driver/gpio.h"
+        10. 配置IO：
             * 方式1:esp_err_t gpio_config(const gpio_config_t *pGPIOConfig)
             配置GPIO的模式，上拉，下拉，中断触发类型
             ```示例
@@ -490,25 +492,25 @@ W15:期末考查
                     gpio_pulldown_en()
                     gpio_pulldown_dis()
                 恢复 GPIO 默认值：gpio_reset_pin()
-        8. 简单使用:
+        11. 简单使用:
            ```c
             gpio_reset_pin(4);
             gpio_set_direction(4, GPIO_MODE_OUTPUT);//GPIO作为输出
             gpio_set_level(4, 0);//输出低电平
            ```
     * 具体输入/输出/简单按键,详细见:[](gpio.md)
- 3. 实用的按键:按键的长按和短按 [](gpio.md) [](key.md)
- 4. [LEDC](ledc.md)
- 5. [ADC:](adc.md)
- 6. [DAC:](dac.md)
- 7. [UART](uart.md)
- 8. [Motor Control Pulse Width Modulator (MCPWM)]  
- 8. [I2C通信](i2c.md)
+ 4. 实用的按键:按键的长按和短按 [](gpio.md) [](key.md)
+ 5. [LEDC](ledc.md)
+ 6. [ADC:](adc.md)
+ 7. [DAC:](dac.md)
+ 8. [UART](uart.md)
+ 9.  [Motor Control Pulse Width Modulator (MCPWM)]  
+ 10. [I2C通信](i2c.md)
     - [ssd1306驱动](ssd1306.md)
- 9. SPI通信
- 10. [RMT](rmt.md)
- 11. [ws2812](ws2812.md)
- 12. NVS 读写
+ 11. [1-Wire总线](18b20.md)
+ 12. [RMT](rmt.md)
+ 13. [ws2812](ws2812.md)
+ 14. NVS 读写
      1. 简介
         1. 非易失性存储 (NVS) 库主要用于在 flash 中存储键值格式的数据。
             NVS适合存储一些小数据，如果对象占用空间比较大，使用负载均衡的FAT文件系统。
