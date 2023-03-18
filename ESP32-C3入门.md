@@ -381,13 +381,37 @@
         做完一些初始化任务后（需要启动调度器），主任务在固件中运行应用程序提供的函数 app_main。
         运行 app_main 的主任务有一个固定的 RTOS 优先级（比最小值高）和一个 可配置的堆栈大小。
         与普通的 FreeRTOS 任务（或嵌入式 C 的 main 函数）不同，app_main 任务可以返回。如果``app_main`` 函数返回，那么主任务将会被删除。系统将继续运行其他的 RTOS 任务。因此可以将 app_main 实现为一个创建其他应用任务然后返回的函数，或主应用任务本身
- 1. Hello World
+ 1. 常用函数
+    1. 延时:ets_delay_us(); 
+    2. 自定义printf
+        ```c
+        #include "string.h"
+
+        #define LOG_COLOR_BLACK   "30"
+        #define LOG_COLOR_RED     "31"
+        #define LOG_COLOR_GREEN   "32"
+        #define LOG_COLOR_BROWN   "33"
+        #define LOG_COLOR_BLUE    "34"
+        #define LOG_COLOR_PURPLE  "35"
+        #define LOG_COLOR_CYAN    "36"
+        #define LOG_COLOR(COLOR)  "\033[0;" COLOR "m"
+        #define LOG_RESET_COLOR   "\033[0m"
+
+        #define FILE_NAME(x) (strrchr(x,'/')?strrchr(x,'/')+1:x)  //获取文件名                      
+        #define INFO(format,...) do{ \
+                                printf("[%s:%s()] " format "\n",FILE_NAME(__FILE__),__func__,##__VA_ARGS__); \
+                                }while(0);
+        #define INFOE(format,...) do{ \
+                                printf(LOG_COLOR(LOG_COLOR_RED) "[%s:%s()" format"\n" LOG_RESET_COLOR ,FILE_NAME(__FILE__),__func__,##__VA_ARGS__); \
+                                }while(0);
+        ```
+ 2. Hello World
     1. 配置芯片型号: idf.py set-target esp32
     2. 配置:        idf.py menuconfig
     3. 编译:        idf.py build
     4. 烧写:        idf.py -p PORT [-b BAUD] flash
     5. 查看串口信息: idf.py -p PORT monitor 
- 2. GPIO 输出/输入
+ 3. GPIO 输出/输入
     * GPIO基础
         1. ESP32 芯片具有 34 个物理 GPIO 管脚（GPIO0 ~ GPIO19、GPIO21 ~ GPIO23、GPIO25 ~ GPIO27 和 GPIO32 ~ GPIO39）
         2. Strapping 管脚：GPIO0、GPIO2、GPIO5、GPIO12 (MTDI) 和 GPIO15 (MTDO) 是 Strapping 管脚，不建议用作其他功能
@@ -397,10 +421,10 @@
         6. GPIO34-39 只能设置为输入模式，不具备软件使能的上拉或下拉功能。
         7. TXD & RXD 通常用于烧录和调试
     * GPIO函数
-        5. GPIO的函数:
+        8. GPIO的函数:
             https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32c3/api-reference/peripherals/gpio.html
-        6. 头文件：#include "driver/gpio.h"
-        7. 配置IO：
+        9. 头文件：#include "driver/gpio.h"
+        10. 配置IO：
             * 方式1:esp_err_t gpio_config(const gpio_config_t *pGPIOConfig)
             配置GPIO的模式，上拉，下拉，中断触发类型
             ```示例
@@ -422,27 +446,155 @@
                     gpio_pulldown_en()
                     gpio_pulldown_dis()
                 恢复 GPIO 默认值：gpio_reset_pin()
-        8. 简单使用:
+        11. 简单使用:
            ```c
             gpio_reset_pin(4);
             gpio_set_direction(4, GPIO_MODE_OUTPUT);//GPIO作为输出
             gpio_set_level(4, 0);//输出低电平
            ```
     * 具体输入/输出/简单按键,详细见:[](gpio.md)
- 3. 实用的按键:按键的长按和短按 [](gpio.md) [](key.md)
- 4. [LEDC](ledc.md)
- 5. [ADC:](adc.md)
- 6. [DAC:](dac.md)
- 7. [UART](uart.md)
- 8. [Motor Control Pulse Width Modulator (MCPWM)]  
- 8. [I2C通信](i2c.md)
-    - [ssd1306驱动](ssd1306.md)
- 9. SPI通信
- 10. [RMT](rmt.md)
- 11. [ws2812](ws2812.md)
- 12. RTC实时时钟/系统时钟 time/settimeofday/gettimeofday
- 13. SNTP
- 14. NVS 读写
+ 4. 实用的按键:按键的长按和短按 [](gpio.md) [](key.md)
+ 5. [LEDC](ledc.md)
+ 6. [ADC:](adc.md)
+ 7. [DAC:](dac.md)
+ 8. [UART](uart.md)
+ 9.  [Motor Control Pulse Width Modulator (MCPWM)]  
+ 10. [I2C通信](i2c.md)
+    1. [ssd1306驱动](ssd1306.md)
+    2. [类I2C驱动]tm1637驱动数码管
+      - datasheet:(https://w.electrodragon.com/w/images/2/2c/TM1637.pdf)
+      - TM1637 不是 I2C 从设备，连常规的“I2C 从设备地址”都没有.
+      - 驱动见"esp_tm1637.c"
+      - 练习:修改驱动,使的可以在数码管上显示时间,如"12:34"
+        - 1.先找出":"是由哪个段码驱动的,用tm1637_set_segment_raw()
+        - 2.找出":"是由显示数据中的哪一个位驱动
+        - 3.修改驱动
+ 11. 设置及获得系统时间
+     1.  头文件: "sys/time.h" "time.h"
+     2.  获得时间
+        ```c
+        time_t t;
+        setenv("TZ", "GMT-8", 1);  // 将时区TZ设置为中国所在的东八区
+        tzset();                   // 把c库的运行数据更改位新时区时间
+        t = time(NULL);            /*获取系统时间*/
+        struct tm *now;
+        now = localtime(&t);       // 使用 timer 的值来填充 tm 结构
+        INFO("%s", asctime(now));  // 转成可读格式的日期和时间信息
+        ```
+     3.  设置时间
+         ```c
+            void __setTime(unsigned long epoch, int ms)
+            {
+                struct timeval tv;
+                tv.tv_sec = epoch;  // epoch time (seconds)
+                tv.tv_usec = ms;    // microseconds
+                settimeofday(&tv, NULL);
+            }
+            void setTime(int yr, int mt, int hr, int mn, int dy, int sc )
+            {
+                setenv("TZ", "GMT-8", 1);  // 将时区TZ设置为中国所在的东八区
+                tzset();                   // 把c库的运行数据更改位新时区时间
+
+                struct tm t = {0};      // Initalize to all 0's
+                t.tm_year = yr - 1900;  // This is year-1900, so 121 = 2021
+                t.tm_mon = mt - 1;
+                t.tm_mday = dy;
+                t.tm_hour = hr;
+                t.tm_min = mn;
+                t.tm_sec = sc;
+                time_t timeSinceEpoch = mktime(&t);
+                __setTime(timeSinceEpoch, 0);
+            }
+         ```
+     4.  用4位数码管用一个时钟,可以显示: 小时和分钟,中间":"1秒闪一次
+ 12. NTP
+     ```c
+         #include "esp_sntp.h"
+
+        static const char *TAG = "NTP";
+
+        void ntpReport(void);
+
+        static void obtain_time(void);
+        static void initialize_sntp(void);
+
+        void time_sync_notification_cb(struct timeval *tv)
+        {
+            ESP_LOGI(TAG, "sntp_stop");
+            sntp_stop();
+        }
+
+        void ntp_set(void)
+        {
+            time_t now;
+            struct tm timeinfo;
+            time(&now);
+            localtime_r(&now, &timeinfo);
+            // Is time set? If not, tm_year will be (1970 - 1900).
+            //if (timeinfo.tm_year < (2021 - 1900)) 
+            sntp_stop();
+            {
+                ESP_LOGI(TAG, "Time is not set yet. Connecting to WiFi and getting time over NTP.");
+                obtain_time();
+                // update 'now' variable with current time
+                time(&now);
+            }
+
+            //char strftime_buf[64];
+            //ntpReport();
+            //while (1)
+            // {
+            //     // update 'now' variable with current time
+            //     time(&now);
+
+            //     // Set timezone to China Standard Time
+            //     setenv("TZ", "CST-8", 1);
+            //     tzset();
+            //     localtime_r(&now, &timeinfo);
+            //     // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+            //     // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
+            //     ESP_LOGI(TAG,"%d-%d-%d %d:%d:%d\n",timeinfo.tm_year+1900,timeinfo.tm_mon+1,timeinfo.tm_mday,
+            //                                         timeinfo.tm_hour,timeinfo.tm_min,timeinfo.tm_sec);
+            //     //vTaskDelay(10000 / portTICK_PERIOD_MS);
+            // }
+        }
+
+        static void obtain_time(void)
+        {
+            
+            initialize_sntp();
+
+            // wait for time to be set
+            time_t now = 0;
+            struct tm timeinfo = { 0 };
+            int retry = 0;
+            const int retry_count = 10;
+            while (sntp_get_sync_status() == SNTP_SYNC_STATUS_RESET && ++retry < retry_count) {
+                ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+                vTaskDelay(2000 / portTICK_PERIOD_MS);
+            }
+            time(&now);
+            localtime_r(&now, &timeinfo);
+        }
+
+        static void initialize_sntp(void)
+        {
+            ESP_LOGI(TAG, "Initializing SNTP");
+            sntp_setoperatingmode(SNTP_OPMODE_POLL);
+            sntp_setservername(1, "pool.ntp.org");
+            sntp_setservername(0,"ntp1.aliyun.com");
+            sntp_setservername(2,"210.72.145.44");
+            sntp_set_time_sync_notification_cb(time_sync_notification_cb);
+            sntp_init();
+        }
+     ```
+ 14. [游戏摇杆JOYStick](joystick.md)
+     1. 练习:配合4位数码码,用摇杆设置时间
+ 15. [1-Wire总线](18b20.md)
+ 16. [超声波测距](ultraSonic.md)(timer_HD.md)
+ 17. [RMT](rmt.md)
+ 18. [ws2812](ws2812.md)
+ 19. NVS 读写
      1. 简介
         1. 非易失性存储 (NVS) 库主要用于在 flash 中存储键值格式的数据。
             NVS适合存储一些小数据，如果对象占用空间比较大，使用负载均衡的FAT文件系统。
@@ -452,8 +604,9 @@
            2. 字符型： 以 \0 结尾的字符串；
            3. 二进制数据： 可变长度的二进制数据 (BLOB)
      2. API说明:NVS 接口位于 nvs_flash/include/nvs_flash.h
-        1. nvs_flash_init
-        2. nvs_flash_erase
+        1. nvs_flash_init,如果失败可调用“nvs_flash_erase()”擦除NVS，然后再次初始化
+        2. nvs_open("List", NVS_READWRITE, &my_handle);
+           - 第一个形参为一个字符串，可称为表名。第二个是读写模式，可选读写或者只读，第三个是当前打开的表的句柄
         3. nvs_open
         4. 读取函数
            ```c
@@ -644,7 +797,6 @@
             nvs_close(handle);
         }
         ```
- 15. NVS partition分区
 
 ## 三.系统(FreeRTOS)
 1. 系统Tick
@@ -707,11 +859,11 @@
     3. [WIFI_scan](WIFI_scan.c)
 2. Station模式连接到AP
    1. 关键步骤
-      1. xEventGroupCreate()用于创建一个事件标志组，返回值是事件标志组句柄，属于frerertos里面的东西；
+      1. xEventGroupCreate()用于创建一个事件标志组，返回值是事件标志组句柄，属于freertos里面的东西；
       2. esp_netif_init()用于初始化tcpip协议栈；
       3. esp_event_loop_create_default()创建一个默认系统事件调度循环，之后可以注册回调函数来处理系统的一些事件；
       4. esp_netif_create_default_wifi_sta()创建wifi sta；
-      5. esp_wifi_init(&cfg)初始化wifi；
+      5. esp_wifi_init(&cfg)初始化wifi,需要用WIFI_INIT_CONFIG_DEFAULT填充cfg结构体
       6. esp_event_handler_instance_register 用于向上面的esp_event_loop_create_default()`注册回调函数，在回调函数里面可以处理各种系统事件，比如wfi连接，断开等；
       7. esp_wifi_set_mode用于设置wifi的模式，在这里使用sta模式；
       8. esp_wifi_set_config设置wifi参数；

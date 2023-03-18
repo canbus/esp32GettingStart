@@ -144,7 +144,7 @@
         <br><img src="img/key.png"> 
  2. GPIO输入练习2(完善扫描按键)
     按一下按键，LED灯亮，再按一下，LED灯灭
- 3. 按键示例
+ 3. 按键示例:添加按键消抖
     ```c
         void initKey(){
             gpio_config_t cfg={0};
@@ -170,7 +170,42 @@
             }  
             return 0;
         }
-    ```   
+    ```  
+ 4. 完善按键:完善重复触发
+    上面的示例是一直等到按键抬起来防止重复触发,但是用户体验比较差.下面来改进一下
+    ```c
+        void initKey()
+        {
+            gpio_config_t cfg = {0};
+            cfg.pin_bit_mask = (1ull << BTN1);
+            cfg.mode = GPIO_MODE_INPUT;
+            cfg.pull_up_en = GPIO_PULLUP_ENABLE;
+            cfg.pull_down_en = GPIO_PULLDOWN_DISABLE;
+            cfg.intr_type = GPIO_INTR_DISABLE;
+            gpio_config(&cfg);
+        }
+        uint8_t keyUp = 1;
+        uint32_t getKey(gpio_num_t btn)
+        {
+            if (gpio_get_level((gpio_num_t)btn) == 0) {
+                vTaskDelay(pdMS_TO_TICKS(20));
+                if (gpio_get_level((gpio_num_t)btn) == 0) {
+                    // while (1) {
+                    //     if (gpio_get_level((gpio_num_t)btn))
+                    //         break;
+                    // }
+                    //INFO("key down");
+                    if(keyUp == 1){
+                        keyUp = 0;
+                        return btn;
+                    }
+                    return 0;
+                }
+            }
+            keyUp = 1;
+            return 0;
+        }
+    ``` 
 ## 3:中断输入(实用的按键)
  1. 概念：具体的中断见[](esp32中断.md)
    程序执行过程中CPU会遇到一些特殊情况，是正在执行的程序被“中断”，cpu中止原来正在执行的程序，转到处理异常情况或特殊事件的程序去执行，结束后再返回到原被中止的程序处(断点)继续执行
