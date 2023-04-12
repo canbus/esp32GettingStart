@@ -423,7 +423,6 @@ W15:期末考查
         关闭Bootloader日志：idf.py menuconfig ->Bootloader config->Bootloader log verbosity
         关闭Logging日志：idf.py menuconfig->Component config->Log output->Default log verbosity
  8. [日志](esp_log.md)
-
 ## 二.基础篇
  0. 应用程序的启动流程
     * 本文将会介绍 ESP32-C3 从上电到运行 app_main 函数中间所经历的步骤（即启动流程）。
@@ -529,6 +528,7 @@ W15:期末考查
  9.  [Motor Control Pulse Width Modulator (MCPWM)]  
  10. [I2C通信](i2c.md)
     1. [ssd1306驱动](ssd1306.md)
+    2. [收音机驱动](TEA5767.c)
     2. [类I2C驱动]tm1637驱动数码管
       - datasheet:(https://w.electrodragon.com/w/images/2/2c/TM1637.pdf)
       - TM1637 不是 I2C 从设备，连常规的“I2C 从设备地址”都没有.
@@ -865,7 +865,6 @@ W15:期末考查
             nvs_close(handle);
         }
         ```
-
 ## 三.系统(FreeRTOS)
 1. 系统Tick
    1. FreeRTOS 的时钟节拍
@@ -912,7 +911,6 @@ W15:期末考查
 8. [事件组](eventGroup.md)
 9. [软件定时器](timer.md)
 10. [cJson](cjson.md)
-
 ## 四.WIFI
 1. WIFI 扫描附近AP/阻塞等待扫描结果/回调通知扫描结果
    1. https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/api-reference/network/esp_wifi.html?highlight=esp_wifi_scan_start#_CPPv419esp_wifi_scan_startPK18wifi_scan_config_tb
@@ -950,7 +948,9 @@ W15:期末考查
    1. WIFI_softap
 4. Smart Config(EspTouchForAndroid)
 5. Smart Config(AirKiss)
-## 五.蓝牙
+## 五.蓝牙 
+1. [简介](bt.md)
+2. [Gatt Server](gatt_Server.md)
 ## 六.网络
 1. udp
    1. TCP与UDP优缺点
@@ -1282,7 +1282,7 @@ W15:期末考查
     ```c
         send(connect_socket, rx_buffer, sizeof(rx_buffer, 0);
     ```
-4. mqtt
+4. [mqtt](mqtt.md)
 5. ip地址的设置和获取
 6. esp_http_client实现http请求服务器
    1. HTTP简介
@@ -1462,6 +1462,14 @@ W15:期末考查
             }
            ```
 ## 七.IOT
+1. 智能门铃](https://growing.openharmony.cn/mainPlay/detail?sampleId=3728) | 该样例人感配合按键监测入户门前状态“无人”，“不明人员逗留”，“访客按门铃”。将这些信息实时同步到室内屏幕上，并且在监测到门前有人时，蜂鸣器会报警，提醒室内用户。如果设备联网的情况下，这些信息也会同步到数字管家，并且数字管家还可以远程一键开锁
+2. 智能保险柜](https://growing.openharmony.cn/mainPlay/detail?sampleId=3731) | 该样例利用碰一碰配网接入数字管家，并外接震动传感器，实现保险柜实时监控、报警功能。如果保险柜被震动，则手机会收到告警
+3. 智能烟感系统](https://growing.openharmony.cn/mainPlay/detail?sampleId=3703) | 智能烟感系统通过实时监测环境中烟雾浓度，当烟雾浓度超标时，及时向用户发出警报。在连接网络后，配合数字管家应用，用户可以远程配置智能烟感系统的报警阈值，远程接收智能烟感系统报警信息。实现对危险及时报警，及时处理，守护居家安全。
+4. 智慧窗帘](https://growing.openharmony.cn/mainPlay/detail?sampleId=3706) | 智能窗帘设备不仅接收数字管家应用下发的指令来控制窗帘开启的时间，而且还可以加入到数字管家的日程管理中。通过日程可以设定窗帘开关的时间段，使其在特定的时间段内，窗帘自动打开或者关闭
+5. 智能垃圾桶](https://growing.openharmony.cn/mainPlay/detail?sampleId=3709) | 智能垃圾桶可以通过数字管家应用来监测垃圾桶当前可用容量，提醒主人及时处理垃圾；通过日程管家可以实现和其他智能设备联动
+6. 智能风扇](https://growing.openharmony.cn/mainPlay/detail?sampleId=3711) | 智能风扇设备不仅接收数字管家应用下发的指令来控制风扇开启的时间，调节风扇挡位，更改风扇定时时间，而且还可以加入到数字管家的日程管理中。通过日程可以设定风扇相关的任务，使其在特定的时间段内，风扇自动打开或者关闭，调节挡位大小和定时时间；通过日程管家还可以实现风扇和其他的智能设备联动
+7. 智能台灯（BearPi-HM Nano）](https://growing.openharmony.cn/mainPlay/detail?sampleId=3713) | 智能台灯设备不仅接收数字管家应用下发的指令来控制台灯的开关及亮度，而且还可以加入到数字管家的日程管理中。通过日程可以设定台灯开关的时间段，使其在特定的时间段内，台灯自动打开或者熄灭，并能自动调节相应时间段台灯的亮度；通过日程管家还可以实现台灯和其他的智能设备联动。此样例演示如何在BearPi-HM Nano开发板上实现智能台灯
+8. 蓝牙键盘](https://growing.openharmony.cn/mainPlay/detail?sampleId=3700) | 此样例是基于润和Neptune开发板开发的蓝牙键盘开发样例，搭配USB转串口模块，实现有线键盘转成蓝牙键盘的功能
 
 ## git
 git remote add origin https://github.com/canbus/esp32GettingStart.git
