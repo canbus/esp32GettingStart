@@ -61,8 +61,9 @@
                                                     uart_buffer_size, 10, &uart_queue, 0));
             ```
         4. 发数据
-            使用uart write bytes()往Tx FIFO buffer里面写数据，就可以发送数据
-        5. 收数据
+            使用uart_write_bytes()往Tx FIFO buffer里面写数据，就可以发送数据
+        5. 发数据练习：向串品发送hello,I am xx(xx为学号)
+        6. 收数据
            1. 方式一:轮询(uart_read_bytes())
               * 使用uart_read_bytes()从Rx FIFO buffer里读数据，就是接收数据
               * ```c
@@ -95,7 +96,7 @@
                         }
                     }
                ```
-           2. 方式二:队列信号(xQueueReceive()UART_DATA事件->uart_read_bytes())
+           2. 方式二:队列信号(xQueueReceive()->UART_DATA事件->uart_read_bytes())
               * 当安装驱动的时候uart_driver_install()函数有一个参数*uart_queue和queue_size。该函数会利用这两个参数创建一个UART 事件的队列。此队列即 FreeRTOS 的 Queue。
               * 该队列使用一个uart_event_t类型的结构体,这个结构体包含了事件类型和UART_DATA事件携带的数据
               ```c
@@ -105,6 +106,18 @@
                     ...
                 } uart_event_t;
               ```
+              ```c
+                uart_event_t event;
+                if(xQueueReceive(uart_queue,&event,portMAX_DELAY)){
+                    switch (event.type)
+                    {
+                    case UART_DATA:
+                        printf("rx:%d\n",event.size);
+                        int len = uart_read_bytes(UART_NUM_2, data, BUF_SIZE, 20 / portTICK_RATE_MS);
+                        printf("rx:%d,%s\n",len,data);
+                        break;
+              ```
+
               * 步骤: 用xQueueReceive()接收Queue中的UART_DATA事件然后调用uart_read_bytes()读取数据
               * ```c
                     #include "driver/uart.h"
@@ -145,4 +158,8 @@
                         }
                     }
               ```
- 
+        7. 串口练习1：编写一个简易串口驱动,用串口向PC发送“hello word,xx" ,xx为学号末2位
+        8. 串口练习2：编写一个简易聊天程序,用串口向esp32发送数据:"hello",esp32自动回:”hello,xx"
+        9. 串口练习3：用队列方式接收数据改写练习2
+                    提示：队列信号(xQueueReceive()->UART_DATA事件->uart_read_bytes())
+        9. 串口练习4：实现通过串口发送命令，去控制LED的亮度。比如：发送：10%，则灯的亮度变成10%
