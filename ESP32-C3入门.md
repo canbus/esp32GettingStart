@@ -851,41 +851,11 @@
 9. [软件定时器](timer.md)
 10. [cJson](cjson.md)
 ## 四.WIFI
-1. WIFI 扫描附近AP/阻塞等待扫描结果/回调通知扫描结果
-   1. https://docs.espressif.com/projects/esp-idf/zh_CN/latest/esp32/api-reference/network/esp_wifi.html?highlight=esp_wifi_scan_start#_CPPv419esp_wifi_scan_startPK18wifi_scan_config_tb
-   2. 关键API:
-   ```c
-        esp_err_t esp_wifi_scan_start(const wifi_scan_config_t *config, bool block)
-        Scan all available APs.
-
-        Attention
-        If this API is called, the found APs are stored in WiFi driver dynamic allocated memory and the will be freed in esp_wifi_scan_get_ap_records, so generally, call esp_wifi_scan_get_ap_records to cause the memory to be freed once the scan is done
-    ```
-    3. [WIFI_scan](WIFI_scan.c)
-2. Station模式连接到AP
-   1. 关键步骤
-      1. xEventGroupCreate()用于创建一个事件标志组，返回值是事件标志组句柄，属于freertos里面的东西；
-      2. esp_netif_init()用于初始化tcpip协议栈；
-      3. esp_event_loop_create_default()创建一个默认系统事件调度循环，之后可以注册回调函数来处理系统的一些事件；
-      4. esp_netif_create_default_wifi_sta()创建wifi sta；
-      5. esp_wifi_init(&cfg)初始化wifi,需要用WIFI_INIT_CONFIG_DEFAULT填充cfg结构体
-      6. esp_event_handler_instance_register 用于向上面的esp_event_loop_create_default()`注册回调函数，在回调函数里面可以处理各种系统事件，比如wfi连接，断开等；
-      7. esp_wifi_set_mode用于设置wifi的模式，在这里使用sta模式；
-      8. esp_wifi_set_config设置wifi参数；
-      9. esp_wifi_start启动wifi。
-   2.  回调函数:只要默认系统事件有变化，就会进这个函数，在这个函数里面可以处理wifi连接、断开事件等，事件发生后设置事件标志位
-       ```c
-        static void event_handler(void* arg, esp_event_base_t event_base,
-                                        int32_t event_id, void* event_data)
-        {
-            if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) {
-                esp_wifi_connect();
-            }
-       ```
-   3. 示例:WIFI_station.c
-3. Soft AP
+1. [WIFI 扫描附近AP/阻塞等待扫描结果/回调通知扫描结果](wifi_scan.md)
+2. [Station模式连接到AP](wifi_station.md)
+3. [Soft AP](wifi_softAp.md)
    1. WIFI_softap
-4. Smart Config(EspTouchForAndroid)
+4. [Smart Config(EspTouchForAndroid)](smartConfig.md)
 5. Smart Config(AirKiss)
 ## 五.蓝牙 
 1. [简介](bt.md)

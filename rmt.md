@@ -212,7 +212,7 @@
                 config.rmt_mode = RMT_MODE_TX;		//发送
                 config.channel = RMT_TX_CHANNEL;	//通道
                 config.gpio_num = CONFIG_EXAMPLE_RMT_TX_GPIO;			//管脚
-                config.mem_block_num = 3;				//3个脉冲
+                config.mem_block_num = 1;				
                 config.tx_config.loop_en = false;
                 config.tx_config.carrier_en = false;
                 config.tx_config.idle_output_en = true;
@@ -229,3 +229,6 @@
                 }
             }
         ```
+
+6. 练习:产生如下的脉冲
+   // 1ms off 300us on 500us off 200us on 100us off 200us on
