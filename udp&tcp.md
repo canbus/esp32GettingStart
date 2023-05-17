@@ -1,5 +1,5 @@
 # udp&tcp
-1. udp
+1. udp概念
    1. 什么是udp
       + UDP（UserDatagramProtocol）是一个简单的面向消息的传输层协议，尽管UDP提供标头和有效负载的完整性验证（通过校验和），但它不保证向上层协议提供消息传递，并且UDP层在发送后不会保留UDP 消息的状态。因此，UDP有时被称为不可靠的数据报协议。如果需要传输可靠性，则必须在用户应用程序中实现。
       + UDP使用具有最小协议机制的简单无连接通信模型。UDP提供数据完整性的校验和，以及用于在数据报的源和目标寻址不同函数的端口号。它没有握手对话，因此将用户的程序暴露在底层网络的任何不可靠的方面。如果在网络接口级别需要纠错功能，应用程序可以使用为此目的设计的传输控制协议(TCP)
@@ -65,14 +65,15 @@
    7. udp编程模型
       1. udp编程模型<br><img src="img/udp_flow.png">
       2. socket:创建一个套接字
-        + https://www.man7.org/linux/man-pages/man7/socket.7@@man-pages.html
-        + int sockfd = socket(int domain, int socket_type, int protocol);
-          - domain:用于设置网络通信的域，函数根据这个参数选择通信协议的族。通信协议族在文件sys/socket.h中
-            - 定义可以选择 AF_INET（用于 Internet 进程间通信） 或者 AF_UNIX（用于同一台机器进程间通信）,实际编程中常用AF_INET 
-          - socket_type：套接字类型用于设置套接字通信的类型，主要有SOCKET_STREAM（流式套接字）、SOCK_DGRAM(数据包套接字)
-          - protocol:用于某个协议的特定类型，即type类型中的某个类型。通常某协议中只有一种特定类型，这样protocol参数仅能设置为0；但是有些协议有多种特定的类型，就需要设置这个参数来选择特定的类型。
-        + 创建一个udp `sockfd = socket(AF_INET, SOCKET_DGRAM, 0)` 
+         + https://www.man7.org/linux/man-pages/man7/socket.7@@man-pages.html
+         + int sockfd = socket(int domain, int socket_type, int protocol);
+           - domain:用于设置网络通信的域，函数根据这个参数选择通信协议的族。通信协议族在文件sys/socket.h中
+             - 定义可以选择 AF_INET（用于 Internet 进程间通信） 或者 AF_UNIX（用于同一台机器进程间通信）,实际编程中常用AF_INET 
+           - socket_type：套接字类型用于设置套接字通信的类型，主要有SOCKET_STREAM（流式套接字）、SOCK_DGRAM(数据包套接字)
+           - protocol:用于某个协议的特定类型，即type类型中的某个类型。通常某协议中只有一种特定类型，这样protocol参数仅能设置为0；但是有些协 议有多种特定的类型，就需要设置这个参数来选择特定的类型。
+         + 创建一个udp `sockfd = socket(AF_INET, SOCKET_DGRAM, 0)` 
       3. sendto:发送数据
+         + sendto 函数用于在套接字上写入传出数据
          + https://www.man7.org/linux/man-pages/man2/sendto.2.html
          + ssize_t sendto(int sockfd, const void *buf, size_t len, int flags,
                           const struct sockaddr *dest_addr, socklen_t addrlen);
@@ -85,6 +86,7 @@
            - addrlen:参数指向的地址的大小（以字节为单位）,实际上就是dest_addr的大小
            - 返回值:未发生错误,sendto 将返回发送的字节总数，这可能小于len指示的数字.否则，将返回SOCKET_ERROR值
       4. recvfrom:接收数据
+         + recvfrom 函数读取已连接套接字和未连接套接字上的传入数据，并捕获从中发送数据的地址。 此函数通常用于无连接套接字。 套接字的本地地址必须已知。 对于服务器应用程序，通常通过 绑定显式完成此操作。 客户端应用程序不建议显式绑定
          + https://www.man7.org/linux/man-pages/man2/recvfrom.2.html
          + ssize_t recvfrom(int sockfd, void *restrict buf, size_t len, int flags,
                         struct sockaddr *restrict src_addr,
@@ -96,7 +98,16 @@
            - src_addr:指向 sockaddr 结构中缓冲区的可选指针，该缓冲区将在返回时保存源地址
            - addrlen:指向参数指向的缓冲区大小（以字节为单位 ）,实际上就是dest_addr的大小
            - 返回值:如果未发生错误,recvfrom 将返回收到的字节数.连接已正常关闭，则返回零.否则,将返回SOCKET_ERROR值
-      5. ip地址结构 
+      5. bind:将本地地址与套接字相关联
+         + 在未连接的套接字上需要绑定函数，然后才能对侦听函数进行后续调用
+         + https://www.man7.org/linux/man-pages/man2/bind.2.html
+         + int bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen); 
+           - sockfd:用socket创建的套接字 
+           - addr:指向要分配给绑定套接字 的本地地址 的 sockaddr 结构的指针。
+             - 注册绑定的IP地址必须是"0.0.0.0"
+           - namelen:addr 指向的值的长度（以字节为单位）
+           - 返回值:On success, zero is returned.  On error, -1 is returned, and errno is set to indicate the error.
+      6. ip地址结构 
          + `struct sockaddr`和`struct sockaddr_in`这两个结构体用来处理网络通信的地址
          + sockaddr:
            - sockaddr在头文件#include <sys/socket.h>中定义，sockaddr的缺陷是：sa_data把目标地址和端口信息混在一起了，如下
@@ -126,7 +137,6 @@
           - 二者长度一样，都是16个字节，即占用的内存大小是一致的，因此可以互相转化。二者是并列结构，指向sockaddr_in结构的指针也可以指向sockaddr。
           - sockaddr常用于bind、connect、recvfrom、sendto等函数的参数，指明地址信息，是一种通用的套接字地址。
           - sockaddr_in 是internet环境下套接字的地址形式。所以在网络编程中我们会对sockaddr_in结构体进行操作，使用sockaddr_in来建立所需的信息，最后使用类型转化就可以了。一般先把sockaddr_in变量赋值后，强制类型转换后传入用sockaddr做参数的函数：sockaddr_in用于socket定义和赋值；sockaddr用于函数参数
-
    8. API汇总
       * 以下 BSD Socket 接口位于 lwip/lwip/src/include/lwip/sockets.h。
       * socket()
@@ -166,54 +176,522 @@
                 network.s_addr=2097326272;    //为s_addr赋值--网络字节序
                 printf("IP : %s\n", inet_ntoa(network));
             ``` 
-   10. udp客户端步骤
-      1. 新建socket
-         * 
-         ```c
-            int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-            if(sockfd < 0) 
-            {
-                ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-            }
-                    
-         ```
-      2. 配置将要连接的服务器信息（端口和IP）
-         ```c
-            #define HOST_IP_ADDR    "192.168.110.239"    // 要连接UDP服务器地址
-            #define UDP_PORT        9000                 // 要连接UDP服务器端口号
+2. udp客户端步骤
+    1. 新建socket
+      ```c
+         int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+         if(sockfd < 0) 
+         {
+             ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+         }
+                 
+      ```
+    2. 配置将要连接的服务器信息（端口和IP）
+      ```c
+         #define HOST_IP_ADDR    "192.168.110.239"    // 要连接UDP服务器地址
+         #define UDP_PORT        9000                 // 要连接UDP服务器端口号
 
-            struct sockaddr_in dest_addr;
-            dest_addr.sin_family = AF_INET;
-            dest_addr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
-            dest_addr.sin_port = htons(UDP_PORT);
-         ```
-      3. 发送数据
-         ```c
-            char *msg = "Message from ESP32";
-            //以下语句有个小bug
-            int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr));
-            if (err < 0) {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+         struct sockaddr_in dest_addr;
+         dest_addr.sin_family = AF_INET;
+         dest_addr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
+         dest_addr.sin_port = htons(UDP_PORT);
+      ```
+    3. 发送数据
+      ```c
+         char *msg = "Message from ESP32";
+         //以下语句有个小bug
+         int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr));
+         if (err < 0) {
+             ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+             close(sockfd);
+         }
+      ```
+    4. 接收数据
+      ```c
+         while (1){
+             char buf[100];
+             struct sockaddr from;
+             uint32_t fromlen = sizeof(from);
+             int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+             if(len > 0){
+                 printf("receive:%d\n",len);
+                 printf("%s\n",buf);
+
+                 struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
+                 printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
+             }
+         }
+      ```
+    5. udp客户端实例:
+    ```c
+     #include <stdio.h>
+
+     #include "esp_wifi.h"
+     #include "freertos/FreeRTOS.h"
+     #include "freertos/task.h"
+     #include "nvs_flash.h"
+     #include "string.h"
+     #include "esp_log.h"
+     #include "esp_smartconfig.h"
+     #include "freertos/event_groups.h"
+     #include "lwip/sockets.h"
+     #define TAG "main"
+
+     void udp(void){
+         printf("udp start\n");
+         int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+         if(sockfd < 0){
+             ESP_LOGE("", "Unable to create socket: errno %d", errno);
+         }
+
+         struct sockaddr_in dest_addr;
+         dest_addr.sin_family = AF_INET;
+         dest_addr.sin_addr.s_addr = inet_addr("192.168.110.239");
+         dest_addr.sin_port = htons(9000);
+
+         char *msg = "Message from ESP32";
+         int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr));
+         if (err < 0) {
+             ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+             close(sockfd);
+         }
+         while (1){
+             char buf[100];
+             struct sockaddr from;
+             uint32_t fromlen = sizeof(from);
+             int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+             if(len > 0){
+                 printf("receive:%d\n",len);
+                 printf("%s\n",buf);
+
+                 struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
+                 printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
+             }
+         }
+     }
+
+     static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id,void* event_data)
+     {
+         ESP_LOGI("", "event_base:%s， event_id：%d\r\n", event_base, event_id);
+         if (event_base == WIFI_EVENT) {
+             switch (event_id) {
+             case WIFI_EVENT_STA_START:  // STA模式启动
+                 esp_wifi_connect();
+                 break;
+             case WIFI_EVENT_STA_DISCONNECTED:
+                 
+                 break;
+             }
+         }
+         if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
+             ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+             ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+             xTaskCreate(udp,"",1028 * 4,NULL,5,NULL);
+         }
+         
+     }
+
+     void app_main(void)
+     {
+         nvs_flash_init();
+         esp_netif_init();
+         
+         esp_event_loop_create_default();  // 创建一个默认的事件循环
+         
+         esp_netif_create_default_wifi_sta();//必须放在esp_event_loop_create_default()后面,否则收不到IP_EVENT_STA_GOT_IP
+
+         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+         esp_wifi_set_mode(WIFI_MODE_STA);
+
+         esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, NULL);
+         esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,&event_handler, NULL, NULL);
+
+         wifi_config_t conf={.sta.ssid="xxxx",
+                             .sta.password="abcd12345",
+                             .sta.threshold.authmode= WIFI_AUTH_WPA2_PSK,};
+         esp_wifi_set_config(WIFI_IF_STA, &conf);
+         esp_wifi_start();
+         
+     }
+
+    ```  
+    6. 练习:实现upd实现一个聊天程序,实现和PC通信  
+3. udp服务器步骤
+       1. 新建socket
+            ```c
+                int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+                if(sockfd < 0) 
+                {
+                    ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+                }         
+            ```
+       2. 绑定端口号:
+            ```c
+                struct sockaddr_in sockaddr={//.sin_addr.s_addr = inet_addr("0.0.0.0"),
+                                 .sin_addr.s_addr = htonl(INADDR_ANY)
+                                 .sin_port = htons(9000),
+                                 .sin_family = AF_INET};
+                if(bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0){
+                    ESP_LOGE("", "Unable to bind socket: errno %d", errno);
+                }
+            ```
+       3. 接收数据
+            ```c
+                while (1){
+                    char buf[100];
+                    struct sockaddr from;
+                    uint32_t fromlen = sizeof(from);
+                    int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+                    if(len > 0){
+                        printf("receive:%d\n",len);
+                        printf("%s\n",buf);
+
+                        struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
+                        printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
+                    }
+                }
+                close(sockfd);
+            ```
+       4. udp服务器示例
+          ```c
+            #include <stdio.h>
+
+            #include "esp_wifi.h"
+            #include "freertos/FreeRTOS.h"
+            #include "freertos/task.h"
+            #include "nvs_flash.h"
+            #include "string.h"
+            #include "esp_log.h"
+            #include "esp_smartconfig.h"
+            #include "freertos/event_groups.h"
+            #include "lwip/sockets.h"
+
+            #define TAG "main"
+
+            void udpTask(void){
+                printf("udp start\n");
+                int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+                if(sockfd < 0){
+                    ESP_LOGE("", "Unable to create socket: errno %d", errno);
+                }
+                
+                struct sockaddr_in sockaddr={//.sin_addr.s_addr = inet_addr("0.0.0.0"),
+                                            .sin_addr.s_addr = htonl(INADDR_ANY)
+                                            .sin_port = htons(9000),
+                                            .sin_family = AF_INET};
+                if(bind(sockfd, (struct sockaddr*)&sockaddr, sizeof(sockaddr)) < 0){
+                    ESP_LOGE("", "Unable to bind socket: errno %d", errno);
+                }
+                while (1){
+                    char buf[100];
+                    struct sockaddr from;
+                    uint32_t fromlen = sizeof(from);
+                    int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+                    if(len > 0){
+                        printf("receive:%d\n",len);
+                        printf("%s\n",buf);
+
+                        struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
+                        printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
+                    }
+                }
                 close(sockfd);
             }
-         ```
-      4. 接收数据
-         ```c
+
+            static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id,void* event_data)
+            {
+                ESP_LOGI("", "event_base:%s， event_id：%d\r\n", event_base, event_id);
+                if (event_base == WIFI_EVENT) {
+                    switch (event_id) {
+                    case WIFI_EVENT_STA_START:  // STA模式启动
+                        esp_wifi_connect();
+                        break;
+                    case WIFI_EVENT_STA_DISCONNECTED:
+                        
+                        break;
+                    }
+                }
+                if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
+                    ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+                    ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+                    xTaskCreate(udpTask,"",1028 * 4,NULL,5,NULL);
+                }
+                
+            }
+
+            void app_main(void)
+            {
+                nvs_flash_init();
+                esp_netif_init();
+                
+                esp_event_loop_create_default();  // 创建一个默认的事件循环
+                
+                esp_netif_create_default_wifi_sta();//必须放在esp_event_loop_create_default()后面,否则收不到IP_EVENT_STA_GOT_IP
+
+                wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+                ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+                esp_wifi_set_mode(WIFI_MODE_STA);
+
+                esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, NULL);
+                esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,&event_handler, NULL, NULL);
+
+                wifi_config_t conf={.sta.ssid="xxxx",
+                                    .sta.password="abcd12345",
+                                    .sta.threshold.authmode= WIFI_AUTH_WPA2_PSK,};
+                esp_wifi_set_config(WIFI_IF_STA, &conf);
+                esp_wifi_start();
+                
+            }
+
+          ```     
+4. tcp概念
+   1. TCP和UDP的对比
+      1. TCP面向连接（如打电话要先拨号建立连接,需要三次握手）;UDP是无连接的，即发送数据之前不需要建立连接。
+      2. TCP提供可靠的服务。也就是说，通过TCP连接传送的数据，无差错，不丢失，不重复，且按序到达
+      3. UDP尽最大努力交付，即不保证可靠交付。
+      4. TCP通过校验和，重传控制，序号标识，滑动窗口、确认应答实现可靠传输。如丢包时的重发控制，还可以对次序乱掉的分包进行顺序控制
+      5. UDP具有较好的实时性，工作效率比TCP高，适用于对高速传输和实时性有较高的通信或广播通信。
+      6. 每一条TCP连接只能是点到点的;UDP支持一对一，一对多，多对一和多对多的交互通信。
+      7. TCP对系统资源要求较多，UDP对系统资源要求较少
+   2. TCP的三次握手和4次挥手(https://zhuanlan.zhihu.com/p/108504297)
+   3. TCP 最主要的特点
+      1. TCP 是面向连接的运输层协议。应用程序在使用 TCP 协议之前，必须先建立 TCP 连接。在传送数据完毕后，必须释放已经建立的 TCP 连接
+      2. 每一条 TCP 连接只能有两个端点，每一条 TCP 连接只能是点对点的(一对一)
+      3. TCP 提供可靠交付的服务。通过 TCP 连接传送的数据，无差错、不丢失、不重复，并且按序到达
+      4. TCP 提供全双工通信。TCP 允许通信双方的应用进程在任何时候都能发送数据。TCP 连接的两端都设有发送缓存和接受缓存，用来临时存放双向通信的数据
+      5. 面向字节流。TCP 中的“流”指的是流入到进程或从进程流出的字节序列
+   4. 面向字节流
+      1. “面向字节流”的含义是：虽然应用程序和 TCP 的交互式一次一个数据块(大小不等)，但 TCP 把应用程序交下来的数据仅仅看成是一连串的无结构的字节流。TCP 并不知道所传送的字节流的含义
+      2. TCP 不保证接收方应用程序所收到的数据块和发送方应用程序所发出的数据块具有对应大小的关系
+      3. 例如，发送方应用程序交给发送方的 TCP 共10个数据块，但接收方的 TCP 可能只用了4个数据块就把收到的字节流交付上层的应用程序
+      4. TCP 和 UDP 在发送报文时采用的方式完全不同。TCP 并不关心应用进程一次把多长的报文发送到 TCP 的缓存中，而是根据对方给出的窗口值和当前网络拥塞的程度来决定一个报文段应包含多少个字节(UDP 发送的报文长度是应用进程给出的)。如果应用进程传送到 TCP 缓存的数据块太长，TCP 就可以把它划分短一些再传送。如果应用进程一次只发来一个字节，TCP 也可以等待积累有足够多的字节后再构成报文段发送出去
+5. tcp client
+   1. 主要流程<br><img src="img/tcp.png">
+   2. 新建socket
+        ```c
+            int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            if(sockfd < 0){
+                ESP_LOGE("", "Unable to create socket: errno %d", errno);
+                close(sockfd);
+            }
+        ```
+   3. 配置将要连接的服务器信息（端口和IP）
+        ```c
+         struct sockaddr_in dest_addr={.sin_family = AF_INET,
+                                  .sin_addr.s_addr = inet_addr("192.168.110.239"),
+                                  .sin_port = htons(9000)};
+        ```
+   4. 连接服务器
+        ```c
+            if(connect(sockfd, &sockaddr, strlen(struct  sockaddr)) < 0)
+            {
+                ESP_LOGE("", "Unable to connect : errno %d", errno);
+            }
+        ```
+   5. 发送数据:send
+         + send 函数用于在套接字上写入传出数据.
+         + https://www.man7.org/linux/man-pages/man2/send.2.html
+         + ssize_t send(int sockfd, const void *buf, size_t len, int flags); 
+           - sockfd:用socket创建的套接字 
+           - buf:指向包含要传输数据的缓冲区的指针。
+           - len:buf 参数指向的数据长度（以字节为单位）
+           - flags:一组指定调用方式的标志。 此参数是使用以下任一值的按位 OR 运算符构造的,通常可以设为`0`
+             - MSG_DONTROUTE：send函数使用，告诉IP协议，目的主机在本地网络上，不需要查找路由表。
+             - MSG_OOB：可以接收和发送带外数据，没记错的话TCP的数据包中六个标记位中就有这样一个标记位，即URG。
+             - MSG_PEEK：表示只是从缓冲区读取内容而不清除缓冲区，也就是说下次读取还是相同的内容，多进程需要读取相同数据的时候可以使用。
+             - MSG_WAITALL:表示收到了所有数据的时候才从阻塞中返回，如果没有收到的足够数据，就会一直阻塞
+           - 返回值:成功,则返回发送的总字节数，该字节数可能小于 在 len 参数中请求发送的数量。 否则，将返回值 SOCKET_ERROR
+        ```c
+            char *p = "hello tcp";
+            send(sockfd, p, strlen(p), 0);
+        ```   
+   6. 接收数据:recv
+         + recv从连接的套接字或绑定的无连接套接字接收数据
+         + https://www.man7.org/linux/man-pages/man2/recv.2.html
+         + ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+           - sockfd:用socket创建的套接字 
+           - buf:指向包含要传输数据的缓冲区的指针。
+           - len:buf 参数指向的数据长度（以字节为单位）
+           - flags:一组影响此函数行为的标志,同send函数
+           - 返回值: recv 将返回收到的字节数， buf 参数指向的缓冲区将包含接收的此数据。 如果连接已正常关闭，则返回值为零
+        ```c
             while (1){
                 char buf[100];
-                struct sockaddr from;
-                uint32_t fromlen = sizeof(from);
-                int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+                
+                int len = recv(sockfd, (void *)buf, sizeof(buf), 0);
                 if(len > 0){
                     printf("receive:%d\n",len);
                     printf("%s\n",buf);
-
-                    struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
-                    printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
                 }
             }
-         ```
-      5. 实例:
+            close(sockfd);
+        ```
+   7. tcp client示例
+        ```c
+            #include <stdio.h>
+
+            #include "esp_wifi.h"
+            #include "freertos/FreeRTOS.h"
+            #include "freertos/task.h"
+            #include "nvs_flash.h"
+            #include "string.h"
+            #include "esp_log.h"
+            #include "esp_smartconfig.h"
+            #include "freertos/event_groups.h"
+            #include "lwip/sockets.h"
+
+            #define TAG "main"
+
+            void tcpTask(void){
+                printf("tcp start\n");
+                int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+                if(sockfd < 0){
+                    ESP_LOGE("", "Unable to create socket: errno %d", errno);
+                    close(sockfd);
+                }
+                
+                struct sockaddr_in dest_addr={.sin_family = AF_INET,
+                                            .sin_addr.s_addr = inet_addr("192.168.110.239"),
+                                            .sin_port = htons(9000)};
+                if(connect(sockfd, (struct sockaddr *)&dest_addr, sizeof(struct sockaddr_in )) < 0)
+                {
+                    ESP_LOGE("", "Unable to connect : errno %d", errno);
+                }
+
+                char *p = "hello tcp";
+                send(sockfd, p, strlen(p), 0);
+                
+                while (1){
+                    char buf[100];
+                    
+                    int len = recv(sockfd, (void *)buf, sizeof(buf), 0);
+                    if(len > 0){
+                        printf("receive:%d\n",len);
+                        printf("%s\n",buf);
+                    }
+                }
+                close(sockfd);
+            }
+
+            static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id,void* event_data)
+            {
+                ESP_LOGI("", "event_base:%s， event_id：%d\r\n", event_base, event_id);
+                if (event_base == WIFI_EVENT) {
+                    switch (event_id) {
+                    case WIFI_EVENT_STA_START:  // STA模式启动
+                        esp_wifi_connect();
+                        break;
+                    case WIFI_EVENT_STA_DISCONNECTED:
+                        
+                        break;
+                    }
+                }
+                if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
+                    ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+                    ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+                    xTaskCreate(tcpTask,"",1028 * 4,NULL,5,NULL);
+                }
+                
+            }
+
+            void app_main(void)
+            {
+                nvs_flash_init();
+                esp_netif_init();
+                
+                esp_event_loop_create_default();  // 创建一个默认的事件循环
+                
+                esp_netif_create_default_wifi_sta();//必须放在esp_event_loop_create_default()后面,否则收不到IP_EVENT_STA_GOT_IP
+
+                wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+                ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+                esp_wifi_set_mode(WIFI_MODE_STA);
+
+                esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, NULL);
+                esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,&event_handler, NULL, NULL);
+
+                wifi_config_t conf={.sta.ssid="xxxx",
+                                    .sta.password="abcd12345",
+                                    .sta.threshold.authmode= WIFI_AUTH_WPA2_PSK,};
+                esp_wifi_set_config(WIFI_IF_STA, &conf);
+                esp_wifi_start();
+                
+            }
+
+        ```
+   8. 思考题:udp是不是也可以使用send和recv函数?请用代码验证 
+6. tcp server
+   1. 主要流程<br><img src="img\tcp.png">
+   2. 新建socket
+    ```c
+        int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if(sockfd < 0){
+            ESP_LOGE("", "Unable to create socket: errno %d", errno);
+            close(sockfd);
+        }
+    ```
+   3. 配置服务器信息
+    ```c
+        struct sockaddr_in sockaddr = {.sin_family = AF_INET,
+                                .sin_addr.s_addr = htonl(IPADDR_ANY),
+                                .sin_port = htons(9000)};
+    ```
+   4. 绑定地址
+    ```c
+        if(bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) < 0){
+            ESP_LOGE("", "Unable to bind socket: errno %d", errno);
+            close(sockfd); 
+        }
+    ```
+   5. 开始监听:listen()
+      + 侦听函数将套接字置于侦听传入连接的状态
+      + https://www.man7.org/linux/man-pages/man2/listen.2.html
+      + int listen(int sockfd, int backlog);
+       - sockfd:用socket创建的套接字 
+       - backlog:挂起连接队列的最大长度,实际上就是可以连接的最大客户端,但有些并没有实现
+       - 返回值: 如果未发生错误， 侦听 将返回零。 否则，返回 SOCKET_ERROR 值
+    ```c
+        if(listen(sockfd, 2) != 0){
+            printf("listen err: errno %d\n", errno);
+        }
+    ```
+   6.  等待客户端连接:accept()
+       + 在套接字上尝试传入连接
+       + https://www.man7.org/linux/man-pages/man2/accept.2.html
+       + int accept(int sockfd, struct sockaddr *restrict addr, socklen_t *restrict addrlen);
+         - sockfd:用socket创建的套接字 
+         - addr:指向接收连接实体地址（称为通信层）的缓冲区的可选指针
+         - addrlen:指向包含 addr 参数指向的结构长度的整数的可选指针[注意:这是一个输入输出的参数]
+         - 返回值: 成功,将返回一个类型为 SOCKET 的值，该值是新套接字的描述符。 此返回的值是实际连接的套接字的句柄
+    ```c
+        struct sockaddr_in clientaddr = {0};
+        socklen_t addrLen = sizeof(struct sockaddr);
+        int clientFd = accept(sockfd,(struct sockaddr *)&clientaddr,&addrLen);
+        if(clientFd < 0){
+            printf("accept err: errno %d\n", errno);
+        }
+        printf("clientfd:%d,accept:%s,%d\n",clientFd,inet_ntoa(clientaddr.sin_addr.s_addr),ntohs(clientaddr.sin_port));
+    ```
+   7.  接收数据,注意使用的是:clientFd
+    ```c
+        while (1){
+            char buf[100];
+            
+            int len = recv(clientFd, (void *)buf, sizeof(buf), 0);
+            if(len > 0){
+                buf[len] = 0;
+                printf("receive:fd:%d,%d,%s\n",clientFd, len, buf);
+            }
+        }
+        close(clientFd);
+    ```
+   8.  发送数据
+        ```c
+            char *p = "hello tcp";
+            send(clientFd, p, strlen(p), 0);
+        ```
+   9. 示例
       ```c
         #include <stdio.h>
 
@@ -226,38 +704,50 @@
         #include "esp_smartconfig.h"
         #include "freertos/event_groups.h"
         #include "lwip/sockets.h"
+
         #define TAG "main"
-        
-        void udp(void){
-            printf("udp start\n");
-            int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+
+        void tcpTask(void *arg){
+            printf("tcp server start\n");
+            int sockfd = socket(AF_INET, SOCK_STREAM, 0);
             if(sockfd < 0){
                 ESP_LOGE("", "Unable to create socket: errno %d", errno);
-            }
-
-            struct sockaddr_in dest_addr;
-            dest_addr.sin_family = AF_INET;
-            dest_addr.sin_addr.s_addr = inet_addr("192.168.110.239");
-            dest_addr.sin_port = htons(9000);
-
-            char *msg = "Message from ESP32";
-            int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *) &dest_addr, sizeof(dest_addr));
-            if (err < 0) {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
                 close(sockfd);
             }
-            while (1){
-                char buf[100];
-                struct sockaddr from;
-                uint32_t fromlen = sizeof(from);
-                int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
-                if(len > 0){
-                    printf("receive:%d\n",len);
-                    printf("%s\n",buf);
+            struct sockaddr_in sockaddr = {.sin_family = AF_INET,
+                                        .sin_addr.s_addr = htonl(IPADDR_ANY),
+                                        .sin_port = htons(9000)};
+            if(bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) < 0){
+                ESP_LOGE("", "Unable to bind socket: errno %d", errno);
+                close(sockfd); 
+            }
+            if(listen(sockfd, 2) != 0){
+                printf("listen err: errno %d\n", errno);
+            }
 
-                    struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
-                    printf("from:%s\n",inet_ntoa(src_addr->sin_addr.s_addr));
+            while(1){
+                struct sockaddr_in clientaddr = {0};
+                socklen_t addrLen = sizeof(struct sockaddr);
+                int clientFd = accept(sockfd,(struct sockaddr *)&clientaddr,&addrLen);
+                if(clientFd < 0){
+                    printf("accept err: errno %d\n", errno);
                 }
+                printf("clientfd:%d,accept:%s,%d\n",clientFd,inet_ntoa(clientaddr.sin_addr.s_addr),ntohs(clientaddr.sin_port));
+                
+                char *p = "hello tcp";
+                send(clientFd, p, strlen(p), 0);
+                
+                while (1){
+                    char buf[100];
+                    
+                    int len = recv(clientFd, (void *)buf, sizeof(buf), 0);
+                    if(len > 0){
+                        buf[len] = 0;
+                        printf("receive:fd:%d,%d,%s\n",clientFd, len, buf);
+                    }
+                }
+                close(clientFd);
             }
         }
 
@@ -277,7 +767,7 @@
             if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
                 ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
                 ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
-                xTaskCreate(udp,"",1028 * 4,NULL,5,NULL);
+                xTaskCreate(tcpTask,"",1028 * 4,NULL,5,NULL);
             }
             
         }
@@ -306,248 +796,281 @@
             
         }
 
-      ```  
-   11. udp服务器步骤
-      1. 新建socket
-            ```c
-                int addr_family = 0;
-                int ip_protocol = 0;
+      ```
+   10. 思考:改造以上示例,改成可以接受多个客户端接入
+        ```c 多个客户端接入
+        #include <stdio.h>
 
-                addr_family = AF_INET;
-                ip_protocol = IPPROTO_IP;
+        #include "esp_wifi.h"
+        #include "freertos/FreeRTOS.h"
+        #include "freertos/task.h"
+        #include "nvs_flash.h"
+        #include "string.h"
+        #include "esp_log.h"
+        #include "esp_smartconfig.h"
+        #include "freertos/event_groups.h"
+        #include "lwip/sockets.h"
 
-                int sock =  socket(addr_family, SOCK_DGRAM, ip_protocol);
-                if(sock < 0) 
-                {
-                    ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+        #define TAG "main"
+
+        void tcpClientTask(void *arg)
+        {
+            int sockfd = *((int *)arg);
+            printf("client socketfd:%d\n",sockfd);
+            
+            char *p = "hello tcp";
+            send(sockfd, p, strlen(p), 0);
+            
+            while (1){
+                char buf[100];
+                
+                int len = recv(sockfd, (void *)buf, sizeof(buf), 0);
+                if(len > 0){
+                    buf[len] = 0;
+                    printf("receive:fd:%d,%d,%s\n",sockfd, len, buf);
                 }
-            ```
-       2. 配置服务器信息
-            ```c
-                #define UDP_PORT        3333                 // UDP服务器端口号
-
-                struct sockaddr_in dest_addr;
-                dest_addr.sin_family = AF_INET;
-                dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-                dest_addr.sin_port = htons(UDP_PORT);
-            ```
-       3. 绑定地址
-            ```c
-                int err = bind(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-                if(err < 0)
-                {
-                    ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
-                    close(sock);
-                }
-                ESP_LOGI(TAG, "Socket bound, port %d", PORT);
-            ```
-       4. 接收数据
-            ```c
-                char rx_buffer[128];
-                char host_ip[] = HOST_IP_ADDR;
-
-                while(1)
-                {
-                    ······
-                    // 清空缓存
-                    memset(rx_buffer, 0, sizeof(rx_buffer));
-
-                    struct sockaddr_in source_addr; // Large enough for both IPv4 or IPv6
-                    socklen_t socklen = sizeof(source_addr);
-                    int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer), 0, (struct sockaddr *)&source_addr, &socklen);
-
-                    // Error occurred during receiving
-                    if(len < 0) 
-                    {
-                        ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
-                        break;
-                    }
-                    // Data received
-                    else 
-                    {
-                        ESP_LOGI(TAG, "Received %d bytes from %s:", len, host_ip);
-                        ESP_LOGI(TAG, "%s", rx_buffer);
-                    }
-                }
-                close(sock);
-            ```
-       5. 发送数据
-            ```c
-                static const char *payload = "Message from ESP32 ";
-
-                int err = sendto(sock, payload, strlen(payload), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-                if(err < 0) 
-                {
-                    ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-                    close(sock);
-                }
-            ```
-2. tcp
-   1. TCP与UDP优缺点
-      1. TCP面向连接（如打电话要先拨号建立连接）;UDP是无连接的，即发送数据之前不需要建立连接。
-      2. TCP提供可靠的服务。也就是说，通过TCP连接传送的数据，无差错，不丢失，不重复，且按序到达
-      3. UDP尽最大努力交付，即不保证可靠交付。
-      4. TCP通过校验和，重传控制，序号标识，滑动窗口、确认应答实现可靠传输。如丢包时的重发控制，还可以对次序乱掉的分包进行顺序控制
-      5. UDP具有较好的实时性，工作效率比TCP高，适用于对高速传输和实时性有较高的通信或广播通信。
-      6. 每一条TCP连接只能是点到点的;UDP支持一对一，一对多，多对一和多对多的交互通信。
-      7. TCP对系统资源要求较多，UDP对系统资源要求较少
-3. tcp client
-   1. 主要流程<br><img src="tcp.png">
-   2. 新建socket
-        ```c
-            int addr_family = 0;
-            int ip_protocol = 0;
-
-            addr_family = AF_INET;
-            ip_protocol = IPPROTO_IP;
-
-            int sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
-            if(sock < 0) 
-            {
-                ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-                // 新建失败后，关闭新建的socket，等待下次新建
-                close(sock);
             }
-        ```
-   3. 配置将要连接的服务器信息（端口和IP）
-        ```c
-            #define TCP_SERVER_ADRESS    "192.168.61.217"    // 要连接TCP服务器地址
-            #define TCP_PORT             3333                // 要连接TCP服务器端口号
+            close(sockfd);
 
-            struct sockaddr_in dest_addr;
-            dest_addr.sin_family = AF_INET;
-            dest_addr.sin_addr.s_addr = inet_addr(TCP_SERVER_ADRESS);
-            dest_addr.sin_port = htons(TCP_PORT);
-        ```
-   4. 连接服务器
-        ```c
-            int err = connect(sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr);
-            if(err != 0) 
-            {
-                ESP_LOGE(TAG, "Socket unable to connect: errno %d", errno);
-                // 连接失败后，关闭之前新建的socket，等待下次新建
-                close(sock);
+        }
+
+        void tcpTask(void *arg){
+            printf("tcp server start\n");
+            int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+            if(sockfd < 0){
+                ESP_LOGE("", "Unable to create socket: errno %d", errno);
+                close(sockfd);
+            }
+            struct sockaddr_in sockaddr = {.sin_family = AF_INET,
+                                        .sin_addr.s_addr = htonl(IPADDR_ANY),
+                                        .sin_port = htons(9000)};
+            if(bind(sockfd, (struct sockaddr *)&sockaddr, sizeof(struct sockaddr)) < 0){
+                ESP_LOGE("", "Unable to bind socket: errno %d", errno);
+                close(sockfd); 
+            }
+            if(listen(sockfd, 2) != 0){
+                printf("listen err: errno %d\n", errno);
             }
 
-        ```
-   5. 接收数据
-        ```c
-            char rx_buffer[128];
+            while(1){
+                struct sockaddr_in clientaddr = {0};
+                socklen_t addrLen = sizeof(struct sockaddr);
+                int clientFd = accept(sockfd,(struct sockaddr *)&clientaddr,&addrLen);
+                if(clientFd < 0){
+                    printf("accept err: errno %d\n", errno);
+                }
+                printf("clientfd:%d,accept:%s,%d\n",clientFd,inet_ntoa(clientaddr.sin_addr.s_addr),ntohs(clientaddr.sin_port));
+                
+                xTaskCreate(tcpClientTask,"",1024 * 4, (void *)&clientFd, 5, NULL);
+            }
+        }
 
-            while (1) 
-            {
-                ······
-                int len = recv(sock, rx_buffer, sizeof(rx_buffer), 0);
-                // Error occurred during receiving
-                if (len < 0) 
-                {
-                    ESP_LOGE(TAG, "recv failed: errno %d", errno);
+        static void event_handler(void* arg, esp_event_base_t event_base, int32_t event_id,void* event_data)
+        {
+            ESP_LOGI("", "event_base:%s， event_id：%d\r\n", event_base, event_id);
+            if (event_base == WIFI_EVENT) {
+                switch (event_id) {
+                case WIFI_EVENT_STA_START:  // STA模式启动
+                    esp_wifi_connect();
+                    break;
+                case WIFI_EVENT_STA_DISCONNECTED:
+                    
                     break;
                 }
-                // Data received
-                else 
+            }
+            if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP){
+                ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
+                ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+                xTaskCreate(tcpTask,"",1028 * 4,NULL,5,NULL);
+            }
+            
+        }
+
+        void app_main(void)
+        {
+            nvs_flash_init();
+            esp_netif_init();
+            
+            esp_event_loop_create_default();  // 创建一个默认的事件循环
+            
+            esp_netif_create_default_wifi_sta();//必须放在esp_event_loop_create_default()后面,否则收不到IP_EVENT_STA_GOT_IP
+
+            wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+            ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+            esp_wifi_set_mode(WIFI_MODE_STA);
+
+            esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, NULL);
+            esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,&event_handler, NULL, NULL);
+
+            wifi_config_t conf={.sta.ssid="xxx",
+                                .sta.password="abcd12345",
+                                .sta.threshold.authmode= WIFI_AUTH_WPA2_PSK,};
+            esp_wifi_set_config(WIFI_IF_STA, &conf);
+            esp_wifi_start();
+            
+        }
+        ```   
+
+## 综合练习
+实现一个程序:实现串口转udp的功能
+1.esp32从串口接收数据通过udp转发到pc
+2.同时把pc通过udp发送给esp32的数据通过串口发送出去
+```c
+#include <stdio.h>
+
+#include "driver/uart.h"
+#include "esp_log.h"
+#include "esp_smartconfig.h"
+#include "esp_wifi.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "freertos/task.h"
+#include "lwip/sockets.h"
+#include "nvs_flash.h"
+#include "string.h"
+
+#define TAG "main"
+#define BUF_SIZE 1024
+
+int sockfd = 0;
+QueueHandle_t uart_queue;
+void udpSend(uint8_t *msg)
+{
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_addr.s_addr = inet_addr("192.168.110.239");
+    dest_addr.sin_port = htons(9000);
+    if (sockfd != 0) {
+        int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+        if (err < 0) {
+            ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+            close(sockfd);
+        }
+    }
+}
+void uartTask(void *arg) 
+{
+    uint8_t *data = (uint8_t *) malloc(BUF_SIZE);
+    uart_event_t event;
+    while (1) {
+        if (xQueueReceive(uart_queue, &event, portMAX_DELAY)) {
+            switch (event.type) {
+            case UART_DATA:
                 {
-                    memset(rx_buffer, 0, sizeof(rx_buffer));
-                    ESP_LOGI(TAG, "Received %d bytes from %s:", len, TCP_SERVER_ADRESS);
-                    ESP_LOGI(TAG, "%s", rx_buffer);
+                int len = uart_read_bytes(UART_NUM_2, data, BUF_SIZE, 20 / portTICK_RATE_MS);
+                data[len] = 0;
+                printf("rx:%d,%s\n", len, data);
+                udpSend(data);
                 }
-            }
+                break;
 
-        ```
-   6. 发送数据
-        ```c
-            static const char *payload = "Message from ESP32 ";
-
-            int err = send(sock, payload, strlen(payload), 0);
-            if (err < 0) 
-            {
-                ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
-            }
-
-        ```
-4. tcp server
-   1. 主要流程<br><img src="tcp.png">
-   2. 新建socket
-    ```c
-        int addr_family = 0;
-        int ip_protocol = 0;
-
-        addr_family = AF_INET;
-        ip_protocol = IPPROTO_IP;
-
-        int listen_sock =  socket(addr_family, SOCK_STREAM, ip_protocol);
-        if(listen_sock < 0) 
-        {
-            ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-        }
-    ```
-   3. 配置服务器信息
-    ```c
-        #define TCP_PORT             3333                // TCP服务器端口号
-
-        struct sockaddr_in dest_addr;
-        dest_addr.sin_family = AF_INET;
-        dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-        dest_addr.sin_port = htons(TCP_PORT);
-    ```
-   4. 绑定地址
-    ```c
-        int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
-        if(err != 0) 
-        {
-            ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
-            ESP_LOGE(TAG, "IPPROTO: %d", addr_family);
-            close(listen_sock);
-        }
-        ESP_LOGI(TAG, "Socket bound, port %d", PORT);
-    ```
-   5. 开始监听
-    ```c
-        err = listen(listen_sock, 1);    // 这里为啥是1，网上大多数是5
-        if(err != 0) 
-        {
-            ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
-            close(listen_sock);
-        }
-    ```
-   6.  等待客户端连接
-    ```c
-        while(1)
-        {
-            struct sockaddr_in6 source_addr; // Large enough for both IPv4 or IPv6
-            uint addr_len = sizeof(source_addr);
-            int connect_sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
-            if(connect_sock < 0) 
-            {
-                ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
-                close(listen_sock);
-            }    
-        }
-    ```
-   7.  接收数据
-    ```c
-        int len;
-        char rx_buffer[128];
-
-        while(1)
-        {
-            memset(rx_buffer, 0, sizeof(rx_buffer));    // 清空缓存        
-            len = recv(connect_sock, rx_buffer, sizeof(rx_buffer), 0);  // 读取接收数据
-            if(len < 0) 
-            {
-                ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
-            } 
-            else if (len == 0) 
-            {
-                ESP_LOGW(TAG, "Connection closed");
-            } 
-            else 
-            {
-                ESP_LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
+            default:
+                break;
             }
         }
-    ```
-   8.  发送数据
-    ```c
-        send(connect_socket, rx_buffer, sizeof(rx_buffer, 0);
-    ```
+    }
+}
+void uartInit()
+{
+    uart_config_t uartConfig = {
+        .baud_rate = 1000000,
+        .data_bits = UART_DATA_8_BITS,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .source_clk = UART_SCLK_APB,
+    };
+    uart_param_config(UART_NUM_2, &uartConfig);
+
+    ESP_ERROR_CHECK(uart_set_pin(UART_NUM_2, 16, 17, -1, -1));
+
+    const int uart_buffer_size = (1024 * 2);
+    ESP_ERROR_CHECK(
+        uart_driver_install(UART_NUM_2, uart_buffer_size, uart_buffer_size, 10, &uart_queue, 0));
+    uart_write_bytes(UART_NUM_2, (const char *) "hello", 5);
+    xTaskCreate(uartTask, "", 1024 * 4, NULL, 5, NULL);
+}
+void udp(void *arg)
+{
+    printf("udp start\n");
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sockfd < 0) {
+        ESP_LOGE("", "Unable to create socket: errno %d", errno);
+    }
+
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_addr.s_addr = inet_addr("192.168.110.239");
+    dest_addr.sin_port = htons(9000);
+
+    char *msg = "Message from ESP32";
+    int err = sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    if (err < 0) {
+        ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
+        close(sockfd);
+    }
+    while (1) {
+        char buf[100];
+        struct sockaddr from;
+        uint32_t fromlen = sizeof(from);
+        int len = recvfrom(sockfd, (void *)buf, sizeof(buf), 0, &from, &fromlen);
+        if (len > 0) {
+            printf("receive:%d\n", len);
+            printf("%s\n", buf);
+
+            struct sockaddr_in *src_addr = (struct sockaddr_in *)&from;
+            printf("from:%s\n", inet_ntoa(src_addr->sin_addr.s_addr));
+
+            uart_write_bytes(UART_NUM_2, (const char *) buf, len);
+        }
+    }
+}
+
+static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id,
+                          void *event_data)
+{
+    ESP_LOGI("", "event_base:%s， event_id：%d\r\n", event_base, event_id);
+    if (event_base == WIFI_EVENT) {
+        switch (event_id) {
+        case WIFI_EVENT_STA_START:  // STA模式启动
+            esp_wifi_connect();
+            break;
+        case WIFI_EVENT_STA_DISCONNECTED:
+
+            break;
+        }
+    }
+    if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        ESP_LOGI("", "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
+        xTaskCreate(udp, "", 1028 * 4, NULL, 5, NULL);
+    }
+}
+
+void app_main(void)
+{
+    nvs_flash_init();
+    esp_netif_init();
+
+    esp_event_loop_create_default();  // 创建一个默认的事件循环
+
+    esp_netif_create_default_wifi_sta();  // 必须放在esp_event_loop_create_default()后面,否则收不到IP_EVENT_STA_GOT_IP
+
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    esp_wifi_set_mode(WIFI_MODE_STA);
+
+    esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL, NULL);
+    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL, NULL);
+
+    wifi_config_t conf = {
+        .sta.ssid = "YQ2103",
+        .sta.password = "abcd12345",
+        .sta.threshold.authmode = WIFI_AUTH_WPA2_PSK,
+    };
+    esp_wifi_set_config(WIFI_IF_STA, &conf);
+    esp_wifi_start();
+    uartInit();
+}
+
+```
