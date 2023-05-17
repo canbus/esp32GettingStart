@@ -873,6 +873,8 @@
    2. API说明
       * 以下 BSD Socket 接口位于 lwip/lwip/src/include/lwip/sockets.h。
       * socket()
+        * https://www.man7.org/linux/man-pages/man7/socket.7.html
+        * int sockfd = socket(int socket_family, int socket_type, int protocol);
       * bind()
       * accept()
       * shutdown()
@@ -889,6 +891,7 @@
    3. 流程:<br><img src="udp.png"> 
    4. udp客户端步骤
       1. 新建socket
+         * 
          ```c
             int addr_family = 0;
             int ip_protocol = 0;
